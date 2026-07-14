@@ -38,31 +38,66 @@ class MatchPulseApp {
     }
 
     connectTelemetryStream() {
-        // Efficiency: True real-time push data via Server-Sent Events (SSE)
-        // Security: Pass JWT as query param (EventSource does not support custom headers)
-        try {
-            const token = sessionStorage.getItem('matchpulse_token');
-            const url = token
-                ? `/api/telemetry/stream?token=${encodeURIComponent(token)}`
-                : '/api/telemetry/stream';
-            const eventSource = new EventSource(url);
-            eventSource.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    // Dispatch telemetry data to store for reactive UI updates
-                    if (data.event === 'telemetry_update' && data.payload) {
-                         import('./store.js').then(module => {
-                             module.appStore.setState('liveTelemetry', data.payload);
-                         });
-                    }
-                } catch (e) { /* ignore malformed SSE payloads */ }
-            };
-            eventSource.onerror = () => {
-                // Silent retry — EventSource handles reconnect automatically
-            };
-        } catch (e) {
-            console.error('Failed to connect to SSE telemetry stream.', e);
-        }
+        // Resilience: explicit reconnect with exponential backoff.
+        // The browser's native EventSource auto-retry is opaque and non-configurable.
+        // We manage our own lifecycle so the Control Room badge stays accurate.
+        let backoffMs = 2000;
+        const MAX_BACKOFF_MS = 30000;
+        let es = null;
+
+        const connect = () => {
+            try {
+                const token = sessionStorage.getItem('matchpulse_token');
+                const url = token
+                    ? `/api/telemetry/stream?token=${encodeURIComponent(token)}`
+                    : '/api/telemetry/stream';
+
+                es = new EventSource(url);
+
+                es.onopen = () => {
+                    backoffMs = 2000; // reset on successful connection
+                    this._updateSyncBadge(true);
+                };
+
+                es.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.event === 'telemetry_update' && data.payload) {
+                            import('./store.js').then(module => {
+                                module.appStore.setState('liveTelemetry', data.payload);
+                            });
+                        }
+                    } catch (e) { /* ignore malformed SSE payloads */ }
+                };
+
+                es.onerror = () => {
+                    es.close();
+                    this._updateSyncBadge(false);
+                    console.warn(`[SSE] Connection lost. Reconnecting in ${backoffMs / 1000}s…`);
+                    setTimeout(() => {
+                        backoffMs = Math.min(backoffMs * 2, MAX_BACKOFF_MS);
+                        connect();
+                    }, backoffMs);
+                };
+            } catch (e) {
+                console.error('Failed to connect to SSE telemetry stream.', e);
+            }
+        };
+
+        connect();
+    }
+
+    /**
+     * Updates the "SYNCED" status indicator in the Control Room header.
+     * @param {boolean} isConnected
+     * @private
+     */
+    _updateSyncBadge(isConnected) {
+        const badge = document.querySelector('[data-sse-status]');
+        if (!badge) return;
+        badge.textContent = isConnected ? 'SYNCED (100% TELEMETRY)' : 'RECONNECTING…';
+        badge.classList.toggle('text-white/70', isConnected);
+        badge.classList.toggle('text-yellow-400', !isConnected);
     }
 
     /**

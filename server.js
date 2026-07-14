@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import jwt from 'jsonwebtoken';
 import rateLimit from 'express-rate-limit';
+import crypto from 'crypto';
 
 dotenv.config();
 
@@ -49,6 +50,25 @@ if (!STAFF_CREDENTIALS.id || !STAFF_CREDENTIALS.password) {
     process.exit(1);
 }
 
+// Security: Reject well-known placeholder values that ship in the example .env.
+// This prevents accidentally deploying with default credentials.
+const KNOWN_PLACEHOLDERS = new Set([
+    'replace_with_a_long_random_secret_string',
+    'replace_with_a_strong_password',
+    'your_groq_api_key_here',
+    'password123',
+    'secret',
+    'changeme',
+]);
+if (KNOWN_PLACEHOLDERS.has(JWT_SECRET)) {
+    console.error('FATAL: JWT_SECRET is set to a known placeholder value. Set a real secret before starting.');
+    process.exit(1);
+}
+if (KNOWN_PLACEHOLDERS.has(STAFF_CREDENTIALS.password)) {
+    console.error('FATAL: STAFF_PASSWORD is set to a known placeholder value. Set a real password before starting.');
+    process.exit(1);
+}
+
 // Security: Rate limit login attempts to prevent brute-force
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -57,19 +77,38 @@ const loginLimiter = rateLimit({
     skipSuccessfulRequests: true // Only count failed attempts
 });
 
+/**
+ * @route POST /api/login
+ * @desc Authenticate staff and return JWT
+ * @security Rate limited (max 10 failed attempts per 15 mins)
+ */
 app.post('/api/login', loginLimiter, (req, res) => {
     const { id, password } = req.body;
     if (!id || !password) {
         return res.status(400).json({ error: 'Staff ID and password are required.' });
     }
-    if (id === STAFF_CREDENTIALS.id && password === STAFF_CREDENTIALS.password) {
-        const token = jwt.sign({ role: 'staff', id }, EFFECTIVE_JWT_SECRET, { expiresIn: '8h' });
-        res.json({ token });
-    } else {
-        res.status(401).json({ error: 'Invalid credentials' });
+    if (id === STAFF_CREDENTIALS.id) {
+        const providedBuffer = Buffer.from(password, 'utf8');
+        const expectedBuffer = Buffer.from(STAFF_CREDENTIALS.password, 'utf8');
+        
+        let isValid = false;
+        if (providedBuffer.length === expectedBuffer.length) {
+            isValid = crypto.timingSafeEqual(providedBuffer, expectedBuffer);
+        }
+
+        if (isValid) {
+            const token = jwt.sign({ role: 'staff', id }, EFFECTIVE_JWT_SECRET, { expiresIn: '8h' });
+            return res.json({ token });
+        }
     }
+    
+    res.status(401).json({ error: 'Invalid credentials' });
 });
 
+/**
+ * @middleware verifyToken
+ * @desc Validates the JWT from Authorization header or query parameter
+ */
 const verifyToken = (req, res, next) => {
     // Support both Authorization header and query param (needed for EventSource/SSE)
     const authHeader = req.headers.authorization;
@@ -142,20 +181,35 @@ app.post('/api/chat', chatLimiter, async (req, res) => {
             return res.status(500).json({ error: 'No Groq API keys configured on server.' });
         }
 
-        const groqRes = await fetch(GROQ_URL, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${key}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                model: MODEL,
-                messages,
-                temperature,
-                max_tokens,
-                stream: false,
-            }),
-        });
+        // Resilience: abort if Groq takes longer than 15 s to prevent hung requests
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        let groqRes;
+        try {
+            groqRes = await fetch(GROQ_URL, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${key}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    model: MODEL,
+                    messages,
+                    temperature,
+                    max_tokens,
+                    stream: false,
+                }),
+                signal: controller.signal,
+            });
+        } catch (fetchErr) {
+            clearTimeout(timeoutId);
+            if (fetchErr.name === 'AbortError') {
+                return res.status(503).json({ error: 'AI service timed out. Please try again.' });
+            }
+            throw fetchErr;
+        }
+        clearTimeout(timeoutId);
 
         if (!groqRes.ok) {
             const err = await groqRes.text();
@@ -259,6 +313,19 @@ if (process.env.NODE_ENV === 'production') {
         res.sendFile(path.join(distPath, 'index.html'));
     });
 }
+
+// Centralized Express error handler — catches any error passed to next(err)
+// or thrown synchronously in a route, returns a consistent JSON error envelope.
+// Must be defined AFTER all routes and BEFORE app.listen.
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+    const status = err.status || err.statusCode || 500;
+    const message = process.env.NODE_ENV === 'production'
+        ? 'Internal server error'
+        : (err.message || 'Internal server error');
+    console.error(`[Error Handler] ${req.method} ${req.path} →`, err);
+    res.status(status).json({ error: message });
+});
 
 if (process.env.NODE_ENV !== 'test') {
     app.listen(PORT, () => {

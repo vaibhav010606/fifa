@@ -164,3 +164,53 @@ export function announceToScreenReader(message) {
     announcer.textContent = '';
     setTimeout(() => { announcer.textContent = message; }, 50);
 }
+
+// -----------------------------------------------------------------------------
+// DOM & Error Handling Utilities
+// -----------------------------------------------------------------------------
+
+/**
+ * Safely updates the innerHTML of a DOM element, catching and logging any errors.
+ * @param {string} elementId - The ID of the DOM element
+ * @param {string} htmlContent - The HTML string to inject
+ */
+export function safeDOMUpdate(elementId, htmlContent) {
+    try {
+        const el = document.getElementById(elementId);
+        if (el) {
+            el.innerHTML = htmlContent;
+        } else {
+            console.warn(`[DOM Warning] Element with ID '${elementId}' not found.`);
+        }
+    } catch (e) {
+        console.error(`[DOM Error] Failed to update element '${elementId}':`, e);
+    }
+}
+
+/**
+ * Executes a function safely within a try-catch block, logging errors to prevent silent failures.
+ * @param {string} context - The context or name of the operation
+ * @param {Function} fn - The function to execute
+ */
+export function withErrorBoundary(context, fn) {
+    try {
+        return fn();
+    } catch (e) {
+        console.error(`[Error Boundary] Exception caught in '${context}':`, e);
+        return null;
+    }
+}
+
+/**
+ * Async version of withErrorBoundary.
+ * @param {string} context - The context or name of the operation
+ * @param {Function} fn - The async function to execute
+ */
+export async function withAsyncErrorBoundary(context, fn) {
+    try {
+        return await fn();
+    } catch (e) {
+        console.error(`[Async Error Boundary] Exception caught in '${context}':`, e);
+        return null;
+    }
+}

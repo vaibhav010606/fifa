@@ -9,8 +9,10 @@ import { aiResponseCache } from '../utils.js';
  * @returns {Promise<string>}  The assistant's reply text.
  */
 export async function groqChat(messages, opts = {}) {
-    // Efficiency: Check LRU cache first for identical prompt signatures
-    const promptSig = messages.map(m => `${m.role}:${m.content}`).join('|');
+    // Efficiency: Check LRU cache first for identical prompt signatures.
+    // Include language in the key so EN/FR/ES queries never share a cached reply.
+    const lang = opts.lang || 'EN';
+    const promptSig = `[${lang}]` + messages.map(m => `${m.role}:${m.content}`).join('|');
     if (!opts.skipCache) {
         const cached = aiResponseCache.get(promptSig);
         if (cached) {

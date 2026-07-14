@@ -5,6 +5,11 @@ import { BLOCK_DENSITY_DATA, ALL_FACILITIES, COMMITTEE_RECOMMENDATIONS, VOLUNTEE
 import { appStore } from './store.js';
 import { sanitizeInput } from './utils.js';
 
+/**
+ * ControlRoomController
+ * Manages the UI and interactions for the Committee Control Room.
+ * Handles telemetry data, density heatmaps, and AI recommendations.
+ */
 export class ControlRoomController {
     constructor(app) {
         this.app = app;
@@ -17,6 +22,10 @@ export class ControlRoomController {
     }
 
 
+    /**
+     * Initializes the controller, sets up reactive store bindings,
+     * renders initial panels, and binds global events.
+     */
     init() {
         // Reactive bindings for Control Room State
         appStore.subscribe('currentOverlay', () => {
@@ -41,6 +50,9 @@ export class ControlRoomController {
         }, 150);
     }
 
+    /**
+     * Renders all control room panels with error boundaries.
+     */
     renderAllPanels() {
         try { this.renderHeader(); } catch (e) { console.error("Error rendering Header:", e); }
         try { this.renderDensityPanel(); } catch (e) { console.error("Error rendering Density Panel:", e); }
@@ -63,7 +75,7 @@ export class ControlRoomController {
                     </h1>
                     <div class="hidden md:flex items-center gap-2 text-xs text-white/70 bg-white/5 px-3 py-1 rounded-full border border-white/10">
                         <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                        <span class="font-mono-num">SYNCED (100% TELEMETRY)</span>
+                        <span class="font-mono-num" data-sse-status>SYNCED (100% TELEMETRY)</span>
                     </div>
                     <!-- Sustainability & Energy KPI Gauge -->
                     <div class="hidden lg:flex items-center gap-2.5 bg-green-950/40 border border-green-500/30 px-3.5 py-1 rounded-xl text-xs text-green-300">
@@ -445,6 +457,10 @@ export class ControlRoomController {
         });
     }
 
+    /**
+     * Renders the AI Recommendations panel, mapping through the recommendations
+     * list to display confidence, impact, and actionable dispatch buttons.
+     */
     renderAiRecommendations() {
         const panel = document.getElementById('control-ai-panel');
         if (!panel) return;

@@ -1,9 +1,58 @@
 // js/volunteer-portal.js - Volunteer Companion & AI Field Report Controller
-import { VOLUNTEER_TASKS, INCIDENT_LOG, ALL_FACILITIES } from './data.js';
+import { VOLUNTEER_TASKS, INCIDENT_LOG, ALL_FACILITIES, OPERATIONAL_INTELLIGENCE_REPORTS } from './data.js';
 import { groqChat } from './ai/groq-client.js';
 import { sanitizeInput, checkActionCooldown } from './utils.js';
 
+// ---------------------------------------------------------------------------
+// AI Output Schema Validator
+// ---------------------------------------------------------------------------
 
+/** Valid severity levels the AI is allowed to return. */
+const VALID_LEVELS = new Set(['CRITICAL', 'WARNING', 'INFO', 'ALERT']);
+
+/** Known zone prefixes from the data model. */
+const KNOWN_ZONE_PREFIXES = ['GATE_', 'WC_', 'MED_', 'FOOD_', 'B'];
+
+/**
+ * Validates a parsed AI dispatch object against a strict schema before
+ * any steward action is triggered. Returns true if valid, false otherwise.
+ *
+ * This is the trust boundary between the LLM and real-world action dispatch.
+ *
+ * @param {object} parsed - The object parsed from the AI's JSON response.
+ * @returns {{ valid: boolean, reason?: string }}
+ */
+function validateAIDispatch(parsed) {
+    if (!parsed || typeof parsed !== 'object') {
+        return { valid: false, reason: 'Response is not an object' };
+    }
+    if (!VALID_LEVELS.has(parsed.level)) {
+        return { valid: false, reason: `Invalid level: "${parsed.level}"` };
+    }
+    if (typeof parsed.title !== 'string' || parsed.title.trim().length === 0 || parsed.title.length > 100) {
+        return { valid: false, reason: 'title must be a non-empty string ≤ 100 chars' };
+    }
+    if (typeof parsed.details !== 'string' || parsed.details.length > 500) {
+        return { valid: false, reason: 'details must be a string ≤ 500 chars' };
+    }
+    if (typeof parsed.zone !== 'string' || !KNOWN_ZONE_PREFIXES.some(p => parsed.zone.startsWith(p))) {
+        return { valid: false, reason: `Unrecognised zone: "${parsed.zone}"` };
+    }
+    if (parsed.sopAction !== undefined && typeof parsed.sopAction !== 'string') {
+        return { valid: false, reason: 'sopAction must be a string if present' };
+    }
+    if (typeof parsed.sopAction === 'string' && parsed.sopAction.length > 600) {
+        return { valid: false, reason: 'sopAction exceeds 600 char limit' };
+    }
+    return { valid: true };
+}
+
+
+/**
+ * VolunteerPortalController
+ * Manages the Volunteer / Steward Companion App.
+ * Handles AI Copilot field reports and task management.
+ */
 export class VolunteerPortalController {
     constructor(app) {
         this.app = app;
@@ -13,6 +62,9 @@ export class VolunteerPortalController {
         this.isSubmitting = false;
     }
 
+    /**
+     * Initializes the volunteer portal UI and bindings.
+     */
     init() {
         this.setupTabNavigation();
         this.renderCurrentTab();
@@ -230,18 +282,27 @@ Respond ONLY with valid JSON:
             const raw = await groqChat([{ role: 'user', content: prompt }], { max_tokens: 250 });
             const jsonMatch = raw.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
-                parsed = JSON.parse(jsonMatch[0]);
-            } else {
-                parsed = { level: "WARNING", title: text.slice(0,30), details: text, zone: "Concourse", sopAction: "Follow standard protocol: Secure zone, notify nearby units, and verify resolution." };
+                const candidate = JSON.parse(jsonMatch[0]);
+                const { valid, reason } = validateAIDispatch(candidate);
+                if (valid) {
+                    parsed = candidate;
+                } else {
+                    console.warn('[AI Dispatch] Schema validation failed:', reason, '| Raw:', jsonMatch[0]);
+                    parsed = null; // force fallback below
+                }
             }
         } catch (err) {
-            console.error("Report dispatch AI error:", err);
+            console.error('Report dispatch AI error:', err);
+        }
+
+        // Safe fallback — used when AI response is missing, malformed, or fails schema validation
+        if (!parsed) {
             parsed = {
-                level: "WARNING",
-                title: "Field Incident Report",
-                details: text,
-                zone: "Concourse",
-                sopAction: "Standard procedure: Inspect incident area, alert zone supervisor, and log completion."
+                level: 'WARNING',
+                title: sanitizeInput(text.slice(0, 60)),
+                details: sanitizeInput(text, 400),
+                zone: 'GATE_A', // safe default zone
+                sopAction: 'Follow standard protocol: Inspect incident area, alert zone supervisor, and log completion.',
             };
         }
 
@@ -292,6 +353,9 @@ Respond ONLY with valid JSON:
     }
 
 
+    /**
+     * Renders the Tasks and Operational Intelligence tab.
+     */
     renderTasksTab() {
         const tasksHtml = this.tasks.map(t => `
             <div class="glass-panel p-3.5 rounded-xl border border-white/10 flex items-center justify-between text-xs animate-fadeIn gap-3">
@@ -308,6 +372,23 @@ Respond ONLY with valid JSON:
             </div>
         `).join('');
 
+        const intelHtml = OPERATIONAL_INTELLIGENCE_REPORTS.map(r => `
+            <div class="glass-panel p-4 rounded-xl border border-purple-500/40 bg-gradient-to-r from-purple-900/40 to-indigo-900/20 mb-3 text-xs animate-fadeIn shadow-lg">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-2xl">🤖</span>
+                        <div>
+                            <h4 class="font-bold text-purple-300 uppercase tracking-wider">${r.title}</h4>
+                            <span class="text-[10px] text-white/50 font-mono-num">Zone: ${r.zone}</span>
+                        </div>
+                    </div>
+                    <span class="text-[10px] px-2 py-0.5 rounded font-bold uppercase ${r.urgency === 'HIGH' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'}">${r.urgency} Urgency</span>
+                </div>
+                <div class="text-white/80 leading-relaxed mb-2"><strong>AI Insight:</strong> ${r.insight}</div>
+                <div class="text-yellow-300 leading-relaxed font-bold"><strong>Action:</strong> ${r.aiRecommendation}</div>
+            </div>
+        `).join('');
+
         return `
             <div class="space-y-4 animate-fadeIn">
                 <div class="flex items-center justify-between">
@@ -315,7 +396,16 @@ Respond ONLY with valid JSON:
                     <span class="text-[11px] px-2.5 py-1 rounded bg-yellow-500/20 text-yellow-300 font-medium border border-yellow-500/30">Steward Roster Live</span>
                 </div>
                 <p class="text-xs text-white/60">View high-priority tasks assigned by the Committee Control Room and mark them resolved upon completion.</p>
+                
+                ${intelHtml ? `
+                <div class="mt-4 mb-2 border-t border-white/10 pt-3">
+                    <h4 class="text-[10px] text-purple-300 font-bold uppercase tracking-wider mb-2">⚡ OPERATIONAL INTELLIGENCE TRIAGE (AUTO-DETECTED)</h4>
+                    ${intelHtml}
+                </div>
+                ` : ''}
+
                 <div class="space-y-2.5 pt-1">
+                    <h4 class="text-[10px] text-white/50 font-bold uppercase tracking-wider mb-2">Standard Active Tasks</h4>
                     ${tasksHtml}
                 </div>
             </div>

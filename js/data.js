@@ -139,6 +139,14 @@ export const TRANSPORTATION_DATA = [
 
 export const AI_KNOWLEDGE_BASE = [
     {
+        keywords: ["transport", "bus", "train", "metro", "leave", "exit route"],
+        response: "AI FORECAST: Gate C is experiencing 94% egress load. To save approximately 25 minutes of wait time, I recommend taking the Express Shuttle from **Gate E (South Main)** instead. The shuttle fleet has just been expanded to handle the surge.",
+        targetMarker: "GATE_E",
+        targetMarkerLabel: "GATE E (South Main)",
+        actionType: "show_marker",
+        confidence: "99%"
+    },
+    {
         keywords: ["restroom", "toilet", "bathroom", "washroom", "wc"],
         response: "The nearest operational restroom from the East bowl is **WC B (East Concourse)**, approximately 65 meters away right near Gate C. It currently has a short 5-minute queue. Note that **WC C** is currently undergoing quick plumbing maintenance.",
         targetMarker: "WC_B",
@@ -232,6 +240,37 @@ export const COMMITTEE_RECOMMENDATIONS = [
         sourceMarker: "GATE_E",
         targetMarker: "GATE_A",
         status: "pending"
+    },
+    {
+        id: "rec_5",
+        title: "GenAI Sustainability Optimizer: Dim Sector B Lighting",
+        reasoning: "AI analysis of live occupancy sensors indicates Sector B (Lower & Upper) is currently at 12% capacity during halftime. Standard lighting is drawing excess power.",
+        confidence: "99%",
+        impact: "Saves 450 kWh of electricity and reduces carbon footprint by 190 kg CO₂ over the next 30 minutes without affecting fan experience.",
+        actionLabel: "1-Click Approve: Dim Sector B Lights by 40%",
+        sourceMarker: "GATE_B",
+        targetMarker: "GATE_B",
+        status: "pending"
+    }
+];
+
+// AI-driven Operational Intelligence for Volunteer/Steward triage
+export const OPERATIONAL_INTELLIGENCE_REPORTS = [
+    {
+        id: "intel_1",
+        title: "Cluster Alert: Slip-and-Fall Hazards",
+        zone: "South-West Concourse (Near Gate F)",
+        insight: "NLP analysis of 4 recent volunteer reports identifies a repeating pattern of 'wet floor' and 'spill' near Food Kiosk F. High probability of slip hazard.",
+        aiRecommendation: "Dispatch Janitorial Unit 3 immediately with wet-floor signage to prevent injuries.",
+        urgency: "HIGH"
+    },
+    {
+        id: "intel_2",
+        title: "Staffing Reallocation: Medical Hub A",
+        zone: "North-East Hub",
+        insight: "Medical Hub A is seeing a 40% higher influx of dehydration cases than historical averages for this temperature.",
+        aiRecommendation: "Reassign 2 EMTs from Medical Hub C (currently underutilized) to Medical Hub A.",
+        urgency: "MEDIUM"
     }
 ];
 
