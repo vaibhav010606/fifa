@@ -49,6 +49,6 @@ export default async function handler(req) {
         });
     } catch (error) {
         console.error("Vercel Edge API Error:", error);
-        return new Response(JSON.stringify({ error: 'Internal server error processing AI request.' }), { status: 500 });
+        return new Response(JSON.stringify({ error: `Internal server error: ${error.message || String(error)}`, stack: error.stack }), { status: 500 });
     }
 }
