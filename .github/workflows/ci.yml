@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+
+jobs:
+  ci:
+    name: Lint → Test → Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # ── Lint ────────────────────────────────────────────────────────────────
+      - name: Lint (ESLint)
+        run: npm run lint
+
+      # ── Unit + Integration Tests ────────────────────────────────────────────
+      # Secrets are injected as GitHub Actions secrets — never hardcoded here.
+      - name: Test (Vitest + Coverage)
+        env:
+          NODE_ENV: test
+          JWT_SECRET: ${{ secrets.CI_JWT_SECRET }}
+          STAFF_ID: ${{ secrets.CI_STAFF_ID }}
+          STAFF_PASSWORD: ${{ secrets.CI_STAFF_PASSWORD }}
+          GROQ_KEYS: ${{ secrets.CI_GROQ_KEYS }}
+        run: npm test
+
+      # ── Build ────────────────────────────────────────────────────────────────
+      - name: Build (Vite)
+        run: npm run build
