@@ -118,3 +118,5 @@ app.listen(PORT, () => {
         console.log(`🔐 Loaded ${GROQ_KEYS.length} AI API Keys into secure environment.`);
     }
 });
+
+export default app;
