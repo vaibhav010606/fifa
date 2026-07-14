@@ -191,7 +191,7 @@ export class ControlRoomController {
         // Sort blocks highest density first
         const sortedBlocks = Object.entries(BLOCK_DENSITY_DATA).sort((a, b) => b[1].density - a[1].density);
 
-        let blocksHtml = sortedBlocks.slice(0, 6).map(([id, info]) => {
+        const blocksHtml = sortedBlocks.slice(0, 6).map(([id, info]) => {
             let colorClass = 'text-green-400 border-green-500/30 bg-green-500/10';
             if (info.density >= 90) colorClass = 'text-red-400 border-red-500/30 bg-red-500/10 font-bold';
             else if (info.density >= 75) colorClass = 'text-orange-400 border-orange-500/30 bg-orange-500/10';

@@ -67,7 +67,7 @@ class MatchPulseApp {
                                 module.appStore.setState('liveTelemetry', data.payload);
                             });
                         }
-                    } catch (e) { /* ignore malformed SSE payloads */ }
+                    } catch (_e) { /* ignore malformed SSE payloads */ }
                 };
 
                 es.onerror = () => {
@@ -153,7 +153,6 @@ class MatchPulseApp {
             if (idValid && passValid) {
                 try {
                     const btn = document.getElementById('modal-btn-login');
-                    const origText = btn.textContent;
                     btn.textContent = 'Authenticating...';
                     btn.disabled = true;
 
@@ -244,9 +243,6 @@ class MatchPulseApp {
      * @param {'fan'|'control-room'|'volunteer'} viewMode
      */
     mountEngine(viewMode) {
-        const isControl = viewMode === 'control-room';
-        const isVolunteer = viewMode === 'volunteer';
-
         // Lookup map — avoids brittle ternary chains
         const containerMap = {
             'control-room': 'control-map-container',
@@ -264,9 +260,6 @@ class MatchPulseApp {
             return;
         }
 
-        const w = container.clientWidth || container.offsetWidth || 0;
-        const h = container.clientHeight || container.offsetHeight || 0;
-
         // Efficiency: skip full teardown if same mode is already mounted
         if (this.engine && this.lastEngineMode === mode) {
             return;
@@ -276,7 +269,7 @@ class MatchPulseApp {
         if (this.engine) {
             try {
                 this.engine.dispose();
-            } catch (e) { /* ignore */ }
+            } catch (_e) { /* ignore */ }
             this.engine = null;
         }
 
@@ -339,4 +332,15 @@ if (document.readyState === 'loading') {
     window.addEventListener('DOMContentLoaded', startApp);
 } else {
     startApp();
+}
+
+// Service Worker Registration for Offline Capabilities & PWA Support
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then((registration) => {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        }).catch((err) => {
+            console.warn('ServiceWorker registration failed: ', err);
+        });
+    });
 }

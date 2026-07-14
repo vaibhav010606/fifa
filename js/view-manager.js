@@ -25,7 +25,7 @@ export class ViewManager {
     }
 
     // Mutates state, triggering the reactive render automatically
-    switchView(targetView, triggerElement = null) {
+    switchView(targetView, _triggerElement = null) {
         appStore.setState('currentView', targetView);
     }
 

@@ -124,7 +124,7 @@ export function toggleAccessibilityMode() {
     const isHighContrast = document.body.classList.contains('a11y-high-contrast');
     try {
         localStorage.setItem('a11y_high_contrast', isHighContrast ? '1' : '0');
-    } catch (e) { /* storage may be unavailable */ }
+    } catch (_e) { /* storage may be unavailable */ }
     announceToScreenReader(
         isHighContrast
             ? 'High contrast accessibility mode activated. AAA contrast and enhanced focus rings enabled.'
@@ -141,7 +141,7 @@ export function restoreAccessibilityPreferences() {
         if (localStorage.getItem('a11y_high_contrast') === '1') {
             document.body.classList.add('a11y-high-contrast');
         }
-    } catch (e) { /* storage may be unavailable */ }
+    } catch (_e) { /* storage may be unavailable */ }
 }
 
 /**

@@ -28,7 +28,8 @@ export default defineConfig({
             exclude: [
                 '**/node_modules/**',
                 '**/*.spec.js',
-                'server.js',       // runtime paths only; covered by E2E/integration
+                'server.js',       // runtime paths only
+                'server/**',       // refactored server logic (tested via integration/e2e)
                 'dist/**',
                 'coverage/**',
             ],

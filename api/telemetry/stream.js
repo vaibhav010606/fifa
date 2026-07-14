@@ -2,7 +2,7 @@ export const config = {
     runtime: 'edge',
 };
 
-export default function handler(req) {
+export default function handler(_req) {
     const stream = new ReadableStream({
         start(controller) {
             const data = {

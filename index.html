@@ -10,24 +10,7 @@
     <title>MatchPulse AI | FIFA World Cup 2026 Digital Twin</title>
     <!-- Tailwind CSS (CDN for hackathon, locally bundled for prod) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        bebas: ['"Bebas Neue"', 'cursive'],
-                    },
-                    colors: {
-                        fifa: {
-                            purple: '#4f145b',
-                            gold: '#ffb81c'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <script type="module" src="./js/tailwind-config.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap');
         
@@ -79,17 +62,7 @@
             }
         }
     </style>
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').then((registration) => {
-                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                }).catch((err) => {
-                    console.log('ServiceWorker registration failed: ', err);
-                });
-            });
-        }
-    </script>
+
 </head>
 <body class="bg-[#050508] text-white overflow-hidden">
     <!-- Accessibility: ARIA Live Region for 3D Engine Announcements -->

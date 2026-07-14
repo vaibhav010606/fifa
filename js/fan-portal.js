@@ -1,6 +1,6 @@
 // js/fan-portal.js - Fan Portal Logic & AI Assistant Controller
 
-import { AI_KNOWLEDGE_BASE, TRANSPORTATION_DATA, FOOD_DATA, ALL_FACILITIES } from './data.js';
+import { TRANSPORTATION_DATA, FOOD_DATA, ALL_FACILITIES } from './data.js';
 import { StadiumAIGraph } from './ai/stadium-graph.js';
 import { sanitizeInput, checkActionCooldown, announceToScreenReader } from './utils.js';
 
