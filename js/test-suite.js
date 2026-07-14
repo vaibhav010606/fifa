@@ -44,6 +44,9 @@ export class MatchPulseTestSuite {
 
         // Category 5: Problem Statement Alignment (Multilingual & Accessibility checks)
         this.testProblemStatementAlignment();
+        this.testFifaMatchPhasePredictor();
+        this.testMultilingualPABroadcast();
+        this.testSustainabilityKPIs();
 
         // Category 6: Accessibility & ARIA Compliance
         this.testAriaTabPattern();
@@ -269,6 +272,73 @@ export class MatchPulseTestSuite {
         });
     }
 
+    /**
+     * Verifies that all four FIFA match phase time-travel predictions exist and contain
+     * valid block density data — a direct requirement from the problem statement.
+     */
+    testFifaMatchPhasePredictor() {
+        // Access via global data bridge exposed by app.js at runtime
+        const g = (typeof window !== 'undefined' ? window : {});
+        const PREDICTIVE_DENSITY_DATA = g.__MATCHPULSE_DATA__?.PREDICTIVE_DENSITY_DATA ?? null;
+        const phases = ['-30m', '0m', '45m', '90m'];
+        const passed = PREDICTIVE_DENSITY_DATA !== null &&
+            phases.every(phase => {
+                const phaseData = PREDICTIVE_DENSITY_DATA[phase];
+                return phaseData && typeof phaseData === 'object' && Object.keys(phaseData).length >= 36;
+            });
+        this.results.push({
+            category: 'Problem Statement Alignment',
+            name: 'FIFA Time-Travel Predictor — All 4 Match Phases (Pre/Kickoff/Half/Exit)',
+            passed,
+            details: passed
+                ? `Verified all 4 match phase density predictions: ${phases.map(p => `${p}(${Object.keys(PREDICTIVE_DENSITY_DATA[p]).length} blocks)`).join(', ')}.`
+                : 'PREDICTIVE_DENSITY_DATA missing or has insufficient match phase block data (requires 36+ blocks per phase).'
+        });
+    }
+
+    /**
+     * Verifies GenAI PA announcements are present in EN, ES, and FR —
+     * the three FIFA official broadcast languages required by the problem statement.
+     */
+    testMultilingualPABroadcast() {
+        const g = (typeof window !== 'undefined' ? window : {});
+        const GENAI_SIGNAGE_PRESETS = g.__MATCHPULSE_DATA__?.GENAI_SIGNAGE_PRESETS ?? null;
+        const requiredLangs = ['EN', 'ES', 'FR'];
+        const passed = GENAI_SIGNAGE_PRESETS !== null &&
+            Object.values(GENAI_SIGNAGE_PRESETS).length >= 3 &&
+            Object.values(GENAI_SIGNAGE_PRESETS).every(preset =>
+                preset.paAnnouncements &&
+                requiredLangs.every(lang => typeof preset.paAnnouncements[lang] === 'string' && preset.paAnnouncements[lang].length > 0)
+            );
+        this.results.push({
+            category: 'Problem Statement Alignment',
+            name: 'FIFA GenAI Multilingual PA Broadcast — EN/ES/FR Announcement Coverage',
+            passed,
+            details: passed
+                ? `Verified ${Object.keys(GENAI_SIGNAGE_PRESETS).length} presets each with EN/ES/FR PA scripts for multilingual FIFA stadium broadcast compliance.`
+                : 'GENAI_SIGNAGE_PRESETS missing or PA announcements incomplete for EN/ES/FR languages.'
+        });
+    }
+
+    /**
+     * Verifies that stadium sustainability KPIs are tracked —
+     * a FIFA World Cup 2026 mandate for eco-responsible event management.
+     */
+    testSustainabilityKPIs() {
+        const g = (typeof window !== 'undefined' ? window : {});
+        const SUSTAINABILITY_METRICS = g.__MATCHPULSE_DATA__?.SUSTAINABILITY_METRICS ?? null;
+        const requiredKPIs = ['solarGridEfficiency', 'carbonSavedTodayKg', 'recyclingConcourseFullness', 'waterRecoveryRate', 'greenTransitAdoption'];
+        const passed = SUSTAINABILITY_METRICS !== null &&
+            requiredKPIs.every(kpi => typeof SUSTAINABILITY_METRICS[kpi] === 'string' && SUSTAINABILITY_METRICS[kpi].length > 0);
+        this.results.push({
+            category: 'Problem Statement Alignment',
+            name: 'FIFA Sustainability KPIs — Solar, Carbon, Water & Green Transit Metrics',
+            passed,
+            details: passed
+                ? `Verified ${requiredKPIs.length} sustainability KPIs: Solar=${SUSTAINABILITY_METRICS.solarGridEfficiency}, CO₂=${SUSTAINABILITY_METRICS.carbonSavedTodayKg}, Water=${SUSTAINABILITY_METRICS.waterRecoveryRate}.`
+                : `Missing sustainability KPIs: ${requiredKPIs.filter(k => !SUSTAINABILITY_METRICS?.[k]).join(', ')}.`
+        });
+    }
 
 
 

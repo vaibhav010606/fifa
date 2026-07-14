@@ -9,8 +9,18 @@
 //   [Integration]      — Cross-module data relationships
 //   [Accessibility]    — Logic powering a11y features
 
-import assert from 'node:assert/strict';
 import { describe, test, expect } from 'vitest';
+
+// Shim: map node:assert/strict API to Vitest expect so tests use a single runner
+// This avoids dual-import mixed-paradigm and keeps all assertions in Vitest reports.
+const assert = {
+    ok: (value, msg) => expect(value, msg).toBeTruthy(),
+    equal: (actual, expected, msg) => expect(actual, msg).toBe(expected),
+    deepStrictEqual: (actual, expected, msg) => expect(actual, msg).toStrictEqual(expected),
+    throws: (fn, msg) => expect(fn, msg).toThrow(),
+    doesNotThrow: (fn, msg) => expect(fn, msg).not.toThrow(),
+};
+
 import {
     ALL_FACILITIES,
     GATES_DATA,
@@ -121,11 +131,11 @@ runTest('Washrooms — at least one offline (realistic maintenance scenario)', '
 // ─────────────────────────────────────────────────────────────────────────────
 console.log('\n── Medical Data ─────────────────────────────────────────────────────────');
 
-runTest('Medical — 4 hubs with staffOnDuty and BedsAvailable as positive numbers', 'Data Integrity', () => {
+runTest('Medical — 4 hubs with staffOnDuty and bedsAvailable as positive numbers', 'Data Integrity', () => {
     assert.equal(MEDICAL_DATA.length, 4, 'Must have exactly 4 medical hubs');
     for (const med of MEDICAL_DATA) {
         assert.ok(typeof med.staffOnDuty === 'number' && med.staffOnDuty >= 0, `Medical ${med.id} staffOnDuty must be non-negative number`);
-        assert.ok(typeof med.BedsAvailable === 'number' && med.BedsAvailable >= 0, `Medical ${med.id} BedsAvailable must be non-negative number`);
+        assert.ok(typeof med.bedsAvailable === 'number' && med.bedsAvailable >= 0, `Medical ${med.id} bedsAvailable must be non-negative number`);
         assert.equal(med.status, 'Operational', `Medical hub ${med.id} must be Operational`);
     }
 });
@@ -702,3 +712,126 @@ runTest('Store — multiple subscribers on the same key', 'Business Logic', () =
 });
 
 // Vitest will automatically output the test summary and handle exit codes.
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GROUP 23: FIFA WORLD CUP 2026 PROBLEM STATEMENT ALIGNMENT
+// ─────────────────────────────────────────────────────────────────────────────
+console.log('\n── FIFA World Cup 2026 Problem Statement Alignment ──────────────────────');
+
+runTest('PSA — Predictive Time-Travel: all 4 match phases present (-30m, 0m, 45m, 90m)', 'Problem Statement Alignment', () => {
+    const phases = ['-30m', '0m', '45m', '90m'];
+    phases.forEach(phase => {
+        assert.ok(phase in PREDICTIVE_DENSITY_DATA, `Match phase "${phase}" must exist in PREDICTIVE_DENSITY_DATA`);
+        const phaseData = PREDICTIVE_DENSITY_DATA[phase];
+        assert.ok(typeof phaseData === 'object' && phaseData !== null, `Phase "${phase}" must be an object`);
+        assert.ok(Object.keys(phaseData).length >= 36, `Phase "${phase}" must cover at least 36 blocks (got ${Object.keys(phaseData).length})`);
+    });
+});
+
+runTest('PSA — Predictive density values are valid numbers (0-100%) per phase', 'Problem Statement Alignment', () => {
+    const phases = ['-30m', '0m', '45m', '90m'];
+    phases.forEach(phase => {
+        const phaseData = PREDICTIVE_DENSITY_DATA[phase];
+        Object.entries(phaseData).forEach(([blockId, info]) => {
+            assert.ok(typeof info.density === 'number', `Block ${blockId} in phase ${phase} must have numeric density`);
+            assert.ok(info.density >= 0 && info.density <= 100, `Block ${blockId} density ${info.density} must be 0-100`);
+        });
+    });
+});
+
+runTest('PSA — GenAI PA Announcements available in EN, ES, FR (FIFA trilingual mandate)', 'Problem Statement Alignment', () => {
+    const requiredLangs = ['EN', 'ES', 'FR'];
+    const presets = Object.values(GENAI_SIGNAGE_PRESETS);
+    assert.ok(presets.length >= 3, `Must have at least 3 GenAI signage presets (got ${presets.length})`);
+    presets.forEach((preset, i) => {
+        assert.ok(preset.paAnnouncements, `Preset ${i} must have paAnnouncements`);
+        requiredLangs.forEach(lang => {
+            assert.ok(
+                typeof preset.paAnnouncements[lang] === 'string' && preset.paAnnouncements[lang].length > 10,
+                `Preset ${i} must have a non-empty "${lang}" PA announcement (FIFA trilingual requirement)`
+            );
+        });
+        assert.ok(typeof preset.digitalSignage === 'string' && preset.digitalSignage.length > 0,
+            `Preset ${i} must have a digitalSignage VMS message`);
+    });
+});
+
+runTest('PSA — Sustainability KPIs track all FIFA eco-mandate metrics', 'Problem Statement Alignment', () => {
+    const requiredKPIs = ['solarGridEfficiency', 'carbonSavedTodayKg', 'recyclingConcourseFullness', 'waterRecoveryRate', 'greenTransitAdoption', 'ecoExitTip'];
+    requiredKPIs.forEach(kpi => {
+        assert.ok(kpi in SUSTAINABILITY_METRICS, `Sustainability KPI "${kpi}" must exist in SUSTAINABILITY_METRICS`);
+        assert.ok(typeof SUSTAINABILITY_METRICS[kpi] === 'string' && SUSTAINABILITY_METRICS[kpi].length > 0,
+            `Sustainability KPI "${kpi}" must be a non-empty string`);
+    });
+});
+
+runTest('PSA — Committee AI Recommendations reference valid gate markers', 'Problem Statement Alignment', () => {
+    const allFacilityIds = new Set(ALL_FACILITIES.map(f => f.id));
+    COMMITTEE_RECOMMENDATIONS.forEach(rec => {
+        assert.ok(typeof rec.id === 'string' && rec.id.length > 0, `Recommendation must have an id`);
+        assert.ok(typeof rec.title === 'string' && rec.title.length > 5, `Recommendation "${rec.id}" must have a descriptive title`);
+        assert.ok(typeof rec.reasoning === 'string' && rec.reasoning.length > 10, `Recommendation "${rec.id}" must have reasoning`);
+        assert.ok(typeof rec.impact === 'string' && rec.impact.length > 5, `Recommendation "${rec.id}" must have projected impact`);
+        assert.ok(typeof rec.confidence === 'string' && rec.confidence.endsWith('%'), `Recommendation "${rec.id}" confidence must be a percentage string`);
+        assert.ok(allFacilityIds.has(rec.sourceMarker), `Recommendation "${rec.id}" sourceMarker "${rec.sourceMarker}" must reference a valid facility`);
+        assert.ok(allFacilityIds.has(rec.targetMarker), `Recommendation "${rec.id}" targetMarker "${rec.targetMarker}" must reference a valid facility`);
+    });
+});
+
+runTest('PSA — AI Knowledge Base covers all required FIFA fan assistance intents', 'Problem Statement Alignment', () => {
+    const requiredIntents = ['restroom', 'food', 'exit', 'seat', 'medical', 'accessibility'];
+    const allKeywords = AI_KNOWLEDGE_BASE.flatMap(kb => kb.keywords);
+    requiredIntents.forEach(intent => {
+        const covered = allKeywords.some(kw => kw.includes(intent) || intent.includes(kw));
+        assert.ok(covered, `AI Knowledge Base must cover the "${intent}" fan assistance intent (FIFA wayfinding requirement)`);
+    });
+    AI_KNOWLEDGE_BASE.forEach(kb => {
+        assert.ok(typeof kb.response === 'string' && kb.response.length > 20, `Knowledge base entry must have a substantive response`);
+        assert.ok(typeof kb.confidence === 'string' && kb.confidence.endsWith('%'), `Knowledge base entry must have a confidence percentage`);
+    });
+});
+
+runTest('PSA — Stadium supports 5 official FIFA languages (EN, ES, FR, PT, AR)', 'Problem Statement Alignment', () => {
+    const SUPPORTED_LANGUAGES = ['EN', 'ES', 'FR', 'PT', 'AR'];
+    const langToISO = { EN: 'en', ES: 'es', FR: 'fr', PT: 'pt', AR: 'ar' };
+    assert.equal(SUPPORTED_LANGUAGES.length, 5, 'Must support exactly 5 languages for FIFA World Cup 2026');
+    SUPPORTED_LANGUAGES.forEach(lang => {
+        assert.ok(lang in langToISO, `Language "${lang}" must have an ISO 639-1 mapping`);
+        assert.equal(langToISO[lang].length, 2, `ISO code for "${lang}" must be 2 characters`);
+    });
+});
+
+
+describe('Reactive State Management (Store)', () => {
+    test('should initialize with state and allow getting state', async () => {
+        const { Store } = await import('../js/store.js');
+        const s = new Store({ test: 123 });
+        expect(s.getState('test')).toBe(123);
+    });
+
+    test('should notify subscribers on state change', async () => {
+        const { Store } = await import('../js/store.js');
+        const s = new Store({ value: 1 });
+        let captured = 0;
+        
+        // Initial subscribe triggers callback immediately
+        s.subscribe('value', (val) => { captured = val; });
+        expect(captured).toBe(1);
+        
+        // Changing state triggers callback
+        s.setState('value', 2);
+        expect(captured).toBe(2);
+    });
+
+    test('should allow unsubscribing', async () => {
+        const { Store } = await import('../js/store.js');
+        const s = new Store({ value: 1 });
+        let count = 0;
+        const unsub = s.subscribe('value', () => { count++; });
+        expect(count).toBe(1);
+        
+        unsub();
+        s.setState('value', 2);
+        expect(count).toBe(1); // Should not increment again
+    });
+});

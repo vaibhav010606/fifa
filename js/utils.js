@@ -1,5 +1,11 @@
 // js/utils.js - Security, Efficiency Caching & Accessibility Utilities for MatchPulse AI
 
+import { CONFIG } from './config.js';
+
+// -----------------------------------------------------------------------------
+// Security: Input Sanitization (XSS Prevention)
+// -----------------------------------------------------------------------------
+
 /**
  * Security: Comprehensive sanitization of user input against XSS, DOM injection, and buffer overflow.
  * Enforces maximum character limits, strips script/iframe/object tags, removes dangerous URI schemes,
@@ -14,7 +20,7 @@
  * sanitizeInput(null)                                   // => ''
  * sanitizeInput('A'.repeat(1000), 300)                  // => 'A'.repeat(300)
  */
-export function sanitizeInput(input, maxLen = 400) {
+export function sanitizeInput(input, maxLen = CONFIG.MAX_INPUT_LENGTH) {
     if (!input || typeof input !== 'string') return '';
     let cleaned = input.trim().slice(0, maxLen);
     // Strip script/iframe/object/embed tags and their contents
@@ -28,72 +34,73 @@ export function sanitizeInput(input, maxLen = 400) {
     return cleaned;
 }
 
+// -----------------------------------------------------------------------------
+// Security: Action Rate Limiting (Anti-Spam / DoS)
+// -----------------------------------------------------------------------------
+
 /**
  * Security & Anti-Spam: Memory-safe token cooldown tracking per action/user to prevent API quota exhaustion.
- */
-const _cooldowns = new Map();
-
-/**
- * Security & Anti-Spam: Checks if a specific key/user is on cooldown and evicts stale entries
- * to prevent memory leaks and API quota exhaustion.
- *
- * @param {string} key - Unique action identifier (e.g., 'fan_chat_user1')
- * @param {number} [cooldownMs=2000] - Cooldown duration in milliseconds
+ * @param {string} actionKey - Unique action identifier
+ * @param {number} [cooldownMs=CONFIG.COOLDOWN_MS] - The cooldown duration in milliseconds
  * @returns {{ allowed: boolean, remainingSec: number }} Result object
- *
- * @example
- * const r1 = checkActionCooldown('user_42', 3000); // => { allowed: true, remainingSec: 0 }
- * const r2 = checkActionCooldown('user_42', 3000); // => { allowed: false, remainingSec: 3 }
  */
-export function checkActionCooldown(key, cooldownMs = 2000) {
-    const now = Date.now();
-    const lastTime = _cooldowns.get(key) || 0;
-    if (now - lastTime < cooldownMs) {
-        const remaining = Math.ceil((cooldownMs - (now - lastTime)) / 1000);
-        return { allowed: false, remainingSec: remaining };
-    }
-    _cooldowns.set(key, now);
+const actionCooldowns = new Map();
 
-    // Memory cleanup: remove cooldown tokens older than 5 minutes
-    if (_cooldowns.size > 200) {
-        for (const [k, timestamp] of _cooldowns.entries()) {
-            if (now - timestamp > 300000) _cooldowns.delete(k);
+export function checkActionCooldown(actionKey, cooldownMs = CONFIG.COOLDOWN_MS) {
+    const now = Date.now();
+    const lastAction = actionCooldowns.get(actionKey) || 0;
+
+    if (now - lastAction < cooldownMs) {
+        return {
+            allowed: false,
+            remainingSec: ((cooldownMs - (now - lastAction)) / 1000).toFixed(1)
+        };
+    }
+
+    actionCooldowns.set(actionKey, now);
+
+    // Memory cleanup: remove stale entries older than 5 minutes
+    if (actionCooldowns.size > 200) {
+        for (const [k, timestamp] of actionCooldowns.entries()) {
+            if (now - timestamp > 300000) actionCooldowns.delete(k);
         }
     }
 
     return { allowed: true, remainingSec: 0 };
 }
 
+// -----------------------------------------------------------------------------
+// Efficiency: Bounded LRU-style Memory Cache for AI Responses
+// -----------------------------------------------------------------------------
+
 /**
- * Efficiency: Bounded LRU In-Memory Cache with strict TTL for structured AI responses.
- * Reduces Groq API latency from ~800ms down to 1ms for repeated queries or preset chips.
+ * Bounded LRU In-Memory Cache with strict TTL for structured AI responses.
+ * Reduces Groq API latency from ~800ms down to ~1ms for repeated queries.
  */
-class AICache {
-    constructor(maxSize = 50, ttlMs = 600000) {
+export class AICache {
+    constructor() {
         this.cache = new Map();
-        this.maxSize = maxSize;
-        this.ttlMs = ttlMs;
     }
 
-    get(promptKey) {
-        const key = promptKey.trim().toLowerCase();
-        if (this.cache.has(key)) {
-            const entry = this.cache.get(key);
-            if (Date.now() - entry.timestamp < this.ttlMs) {
-                return entry.response;
-            }
-            this.cache.delete(key);
-        }
-        return null;
-    }
-
-    set(promptKey, response) {
-        const key = promptKey.trim().toLowerCase();
-        if (this.cache.size >= this.maxSize) {
+    set(key, value) {
+        const k = key.toLowerCase().trim();
+        if (this.cache.size >= CONFIG.CACHE_MAX_SIZE) {
+            // Evict oldest entry (first in Map insertion order)
             const firstKey = this.cache.keys().next().value;
             this.cache.delete(firstKey);
         }
-        this.cache.set(key, { response, timestamp: Date.now() });
+        this.cache.set(k, { data: value, timestamp: Date.now() });
+    }
+
+    get(key) {
+        const k = key.toLowerCase().trim();
+        const entry = this.cache.get(k);
+        if (!entry) return null;
+        if (Date.now() - entry.timestamp > CONFIG.CACHE_TTL_MS) {
+            this.cache.delete(k);
+            return null;
+        }
+        return entry.data;
     }
 
     clear() {
@@ -103,19 +110,38 @@ class AICache {
 
 export const aiResponseCache = new AICache();
 
+// -----------------------------------------------------------------------------
+// Accessibility Utilities
+// -----------------------------------------------------------------------------
+
 /**
  * Accessibility Helper: Toggles High Contrast AAA Mode across the body and announces state to screen readers.
+ * Persists preference to localStorage so it survives page reloads.
  * @returns {boolean} Whether high contrast mode is currently active
  */
 export function toggleAccessibilityMode() {
     document.body.classList.toggle('a11y-high-contrast');
     const isHighContrast = document.body.classList.contains('a11y-high-contrast');
+    try {
+        localStorage.setItem('a11y_high_contrast', isHighContrast ? '1' : '0');
+    } catch (e) { /* storage may be unavailable */ }
     announceToScreenReader(
-        isHighContrast 
-            ? "High contrast accessibility mode activated. AAA contrast and enhanced focus rings enabled." 
-            : "Standard stadium display mode restored."
+        isHighContrast
+            ? 'High contrast accessibility mode activated. AAA contrast and enhanced focus rings enabled.'
+            : 'Standard stadium display mode restored.'
     );
     return isHighContrast;
+}
+
+/**
+ * Restores accessibility preferences from localStorage on page load.
+ */
+export function restoreAccessibilityPreferences() {
+    try {
+        if (localStorage.getItem('a11y_high_contrast') === '1') {
+            document.body.classList.add('a11y-high-contrast');
+        }
+    } catch (e) { /* storage may be unavailable */ }
 }
 
 /**
@@ -136,7 +162,5 @@ export function announceToScreenReader(message) {
     }
     // Briefly clear and set to trigger screen reader announcement
     announcer.textContent = '';
-    setTimeout(() => {
-        announcer.textContent = message;
-    }, 50);
+    setTimeout(() => { announcer.textContent = message; }, 50);
 }

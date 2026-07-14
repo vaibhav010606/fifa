@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { ALL_FACILITIES } from './data.js';
+import { CONFIG } from './config.js';
 
 export class StadiumEngine {
     constructor(containerEl, mode = 'fan') {
@@ -32,7 +33,7 @@ export class StadiumEngine {
 
         // Spherical orbit state
         this.orbitAngles = { th: Math.PI / 4, ph: Math.PI / 4 };
-        this.orbitRadius = mode === 'tactical' ? 420 : 350;
+        this.orbitRadius = mode === 'tactical' ? CONFIG.ENGINE_ORBIT_RADIUS_TACTICAL : CONFIG.ENGINE_ORBIT_RADIUS_FAN;
         this.orbitLook   = new THREE.Vector3(0, 0, 0);
         this._updateTargetCamPos();
 
@@ -64,6 +65,10 @@ export class StadiumEngine {
         this.labelRenderer.domElement.style.pointerEvents = 'none';
         this.labelRenderer.domElement.style.overflow      = 'hidden';
         containerEl.appendChild(this.labelRenderer.domElement);
+
+        // Accessibility: allow canvas to be focused for keyboard nav
+        this.renderer.domElement.setAttribute('tabindex', '0');
+        this.renderer.domElement.setAttribute('aria-label', '3D Stadium Map. Use arrow keys to pan, plus/minus to zoom.');
 
         // ── ResizeObserver ────────────────────────────────────────────────
         this.resizeObserver = new ResizeObserver(() => this.handleResize());
@@ -112,6 +117,44 @@ export class StadiumEngine {
         this._buildStadiumAsync(isMobile);
         this._bindEvents();
         this._animate();
+    }
+    
+    // ════════════════════════════════════════════════════════════════════════
+    // MEMORY MANAGEMENT (Efficiency)
+    // ════════════════════════════════════════════════════════════════════════
+    dispose() {
+        if (this._animFrameId) {
+            cancelAnimationFrame(this._animFrameId);
+        }
+        if (this.resizeObserver) {
+            this.resizeObserver.disconnect();
+        }
+        
+        // Traverse and dispose all geometries, materials, textures
+        this.scene.traverse((object) => {
+            if (object.isMesh || object.isInstancedMesh) {
+                if (object.geometry) object.geometry.dispose();
+                if (object.material) {
+                    if (Array.isArray(object.material)) {
+                        object.material.forEach(m => m.dispose());
+                    } else {
+                        object.material.dispose();
+                    }
+                }
+            }
+        });
+
+        if (this.renderer) {
+            this.renderer.dispose();
+            if (this.renderer.domElement && this.renderer.domElement.parentNode) {
+                this.renderer.domElement.parentNode.removeChild(this.renderer.domElement);
+            }
+        }
+        if (this.labelRenderer) {
+            if (this.labelRenderer.domElement && this.labelRenderer.domElement.parentNode) {
+                this.labelRenderer.domElement.parentNode.removeChild(this.labelRenderer.domElement);
+            }
+        }
     }
 
     // ════════════════════════════════════════════════════════════════════════
@@ -688,6 +731,25 @@ export class StadiumEngine {
             this._updateTargetCamPos();
         }, { passive: false });
 
+        // Keyboard Navigation (Accessibility)
+        el.addEventListener('keydown', (e) => {
+            const step = 0.05;
+            const zoomStep = 20;
+            switch(e.key) {
+                case 'ArrowLeft':  this.orbitAngles.th += step; break;
+                case 'ArrowRight': this.orbitAngles.th -= step; break;
+                case 'ArrowUp':    this.orbitAngles.ph = Math.min(Math.PI / 2 - 0.05, this.orbitAngles.ph + step); break;
+                case 'ArrowDown':  this.orbitAngles.ph = Math.max(0.1, this.orbitAngles.ph - step); break;
+                case '+':
+                case '=':          this.orbitRadius = Math.max(20, this.orbitRadius - zoomStep); break;
+                case '-':
+                case '_':          this.orbitRadius = Math.min(600, this.orbitRadius + zoomStep); break;
+                default: return; // Do nothing
+            }
+            e.preventDefault();
+            this._updateTargetCamPos();
+        });
+
         // Touch
         el.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
@@ -741,7 +803,7 @@ export class StadiumEngine {
     // RENDER LOOP (Adaptive Efficiency Optimization)
     // ════════════════════════════════════════════════════════════════════════
     _animate() {
-        requestAnimationFrame(() => this._animate());
+        this._animFrameId = requestAnimationFrame(() => this._animate());
 
         let needsRender = false;
 
@@ -756,10 +818,20 @@ export class StadiumEngine {
         const lookDist = this.currentLook.distanceTo(this.orbitLook);
 
         if (camDist > 0.005 || lookDist > 0.005 || this.isDragging) {
-            this.camera.position.lerp(this.targetCamPos, 0.06);
-            this.currentLook.lerp(this.orbitLook, 0.06);
+            this.camera.position.lerp(this.targetCamPos, CONFIG.ENGINE_CAMERA_LERP_SPEED);
+            this.currentLook.lerp(this.orbitLook, CONFIG.ENGINE_CAMERA_LERP_SPEED);
             this.camera.lookAt(this.currentLook);
             needsRender = true;
+        }
+        
+        // Level of Detail (LOD) Optimization
+        if (this.seatInstancedMesh) {
+            const distToCenter = this.camera.position.length();
+            const shouldBeVisible = distToCenter < CONFIG.LOD_DISTANCE_THRESHOLD;
+            if (this.seatInstancedMesh.visible !== shouldBeVisible) {
+                this.seatInstancedMesh.visible = shouldBeVisible;
+                needsRender = true;
+            }
         }
 
         // Efficiency: Only execute GPU render pass if camera/pin is moving or dirty flag is set

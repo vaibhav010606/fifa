@@ -3,12 +3,14 @@
 import { BLOCK_DENSITY_DATA, ALL_FACILITIES, COMMITTEE_RECOMMENDATIONS, VOLUNTEER_TASKS, INCIDENT_LOG, PREDICTIVE_DENSITY_DATA, GENAI_SIGNAGE_PRESETS, SUSTAINABILITY_METRICS } from './data.js';
 
 import { appStore } from './store.js';
+import { sanitizeInput } from './utils.js';
 
 export class ControlRoomController {
     constructor(app) {
         this.app = app;
         this.isCriticalAlertActive = false;
         this.currentTimeTravel = '0m'; // '-30m', '0m', '45m', '90m'
+        this.currentOverlay = 'density'; // track locally in sync with store
         this.recommendations = [...COMMITTEE_RECOMMENDATIONS];
         this.tasks = [...VOLUNTEER_TASKS];
         this.incidents = [...INCIDENT_LOG];
@@ -184,13 +186,13 @@ export class ControlRoomController {
             else if (info.density >= 60) colorClass = 'text-yellow-400 border-yellow-500/30 bg-yellow-500/10';
 
             return `
-                <div class="block-density-item bg-white/5 p-2 rounded-xl border border-white/10 hover:border-white/25 transition-all flex items-center justify-between cursor-pointer" data-block="${id}">
+                <div class="block-density-item bg-white/5 p-2 rounded-xl border border-white/10 hover:border-white/25 transition-all flex items-center justify-between cursor-pointer" data-block="${sanitizeInput(String(id))}">
                     <div class="flex items-center gap-1.5">
-                        <span class="font-mono-num font-bold text-xs text-white">${id}</span>
-                        <span class="text-[9px] text-white/40 uppercase">${info.tier}</span>
+                        <span class="font-mono-num font-bold text-xs text-white">${sanitizeInput(String(id))}</span>
+                        <span class="text-[9px] text-white/40 uppercase">${sanitizeInput(String(info.tier))}</span>
                     </div>
                     <div class="flex items-center gap-1.5">
-                        <span class="font-mono-num text-xs px-1.5 py-0.5 rounded border ${colorClass}">${info.density}%</span>
+                        <span class="font-mono-num text-xs px-1.5 py-0.5 rounded border ${colorClass}">${sanitizeInput(String(info.density))}%</span>
                         ${info.status === 'SURGE' ? '<span class="text-[9px] px-1 rounded bg-red-600 text-white animate-pulse">SURGE</span>' : ''}
                     </div>
                 </div>
@@ -359,7 +361,7 @@ export class ControlRoomController {
                 </div>
 
                 <div class="flex items-center gap-2">
-                    ${this.activeOpsTab === 'incidents' ? `
+                    ${appStore.getState('activeOpsTab') === 'incidents' ? `
                         <button id="btn-simulate-incident" class="bg-red-600 hover:bg-red-500 text-white font-semibold text-xs px-3.5 py-1.5 rounded-xl shadow-lg shadow-red-600/40 cursor-pointer animate-pulse flex items-center gap-1">
                             <span>🚨 Simulate Critical Gate C Surge</span>
                         </button>
@@ -371,7 +373,8 @@ export class ControlRoomController {
         `;
 
         let contentHtml = '';
-        if (this.activeOpsTab === 'incidents') {
+        const currentOpsTab = appStore.getState('activeOpsTab') || 'incidents';
+        if (currentOpsTab === 'incidents') {
             const incItems = this.incidents.map(inc => {
                 let lvlColor = 'text-blue-400 bg-blue-500/10 border-blue-500/30';
                 if (inc.level === 'ALERT' || inc.level === 'CRITICAL') lvlColor = 'text-red-400 bg-red-500/10 border-red-500/30 font-bold';
@@ -381,11 +384,11 @@ export class ControlRoomController {
                     <div class="bg-white/5 p-3 rounded-xl border border-white/10 flex items-start justify-between gap-4">
                         <div class="space-y-1 flex-1">
                             <div class="flex items-center gap-2">
-                                <span class="px-2 py-0.5 rounded border text-[10px] ${lvlColor} font-mono-num">${inc.level}</span>
-                                <span class="text-xs font-bold text-white">${inc.title}</span>
-                                <span class="text-[10px] text-white/40 font-mono-num ml-auto">${inc.time}</span>
+                                <span class="px-2 py-0.5 rounded border text-[10px] ${lvlColor} font-mono-num">${sanitizeInput(inc.level)}</span>
+                                <span class="text-xs font-bold text-white">${sanitizeInput(inc.title)}</span>
+                                <span class="text-[10px] text-white/40 font-mono-num ml-auto">${sanitizeInput(inc.time)}</span>
                             </div>
-                            <p class="text-xs text-white/75 leading-relaxed">${inc.details}</p>
+                            <p class="text-xs text-white/75 leading-relaxed">${sanitizeInput(inc.details)}</p>
                         </div>
                         ${inc.level === 'CRITICAL' ? `
                             <button class="bg-red-600/30 text-red-300 border border-red-500/40 px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0 cursor-pointer">View Hotspot</button>
@@ -404,10 +407,10 @@ export class ControlRoomController {
                 <div class="bg-white/5 p-3 rounded-xl border border-white/10 flex items-center justify-between text-xs">
                     <div class="space-y-1 flex-1 mr-4">
                         <div class="flex items-center gap-2">
-                            <span class="text-[10px] px-2 py-0.5 rounded ${t.priority === 'high' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-blue-500/20 text-blue-300'} font-semibold uppercase">${t.priority} priority</span>
-                            <span class="font-bold text-white text-sm">${t.title}</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded ${t.priority === 'high' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-blue-500/20 text-blue-300'} font-semibold uppercase">${sanitizeInput(t.priority)} priority</span>
+                            <span class="font-bold text-white text-sm">${sanitizeInput(t.title)}</span>
                         </div>
-                        <span class="text-xs text-white/60 block">Assigned Zone: <strong class="text-white">${t.zone}</strong> · Status: <strong class="text-white uppercase font-mono-num">${t.status.replace('_', ' ')}</strong></span>
+                        <span class="text-xs text-white/60 block">Assigned Zone: <strong class="text-white">${sanitizeInput(t.zone)}</strong> · Status: <strong class="text-white uppercase font-mono-num">${sanitizeInput(t.status.replace('_', ' '))}</strong></span>
                     </div>
                     <button class="bg-white/10 hover:bg-green-600 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-colors cursor-pointer shrink-0">
                         ${t.status === 'done' ? '✅ Resolved' : 'Assign / Mark Done'}
@@ -422,7 +425,14 @@ export class ControlRoomController {
             `;
         }
 
-        panel.innerHTML = tabStripHtml + contentHtml;
+        // Fix: contentHtml was computed above but never inserted. Wrap in a proper
+        // container div so the tab body actually renders in the DOM.
+        panel.innerHTML = `
+            ${tabStripHtml}
+            <div id="ops-tab-body" class="flex-1 overflow-hidden flex flex-col">
+                ${contentHtml}
+            </div>
+        `;
 
         document.querySelectorAll('.ops-tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -451,10 +461,10 @@ export class ControlRoomController {
                             ${rec.confidence} Confidence
                         </span>
                     </div>
-                    <h3 class="text-sm sm:text-base font-bold text-white leading-snug">${rec.title}</h3>
+                    <h3 class="text-sm sm:text-base font-bold text-white leading-snug">${sanitizeInput(rec.title)}</h3>
                     <div class="bg-black/45 p-3 rounded-xl border border-white/10 text-xs text-white/85 leading-relaxed space-y-2">
-                        <div><strong class="text-purple-300">Reasoning:</strong> ${rec.reasoning}</div>
-                        <div class="pt-1 border-t border-white/5"><strong class="text-green-300">Projected Impact:</strong> ${rec.impact}</div>
+                        <div><strong class="text-purple-300">Reasoning:</strong> ${sanitizeInput(rec.reasoning)}</div>
+                        <div class="pt-1 border-t border-white/5"><strong class="text-green-300">Projected Impact:</strong> ${sanitizeInput(rec.impact)}</div>
                     </div>
                 </div>
 
@@ -563,8 +573,8 @@ export class ControlRoomController {
         this.isCriticalAlertActive = true;
         document.body.classList.add('animate-pulse-red');
 
-        // Switch Ops Tab to Incidents instantly so the emergency is front-and-center
-        this.activeOpsTab = 'incidents';
+        // Fix: use appStore.setState so the reactive subscription actually fires
+        appStore.setState('activeOpsTab', 'incidents');
 
         // Insert Critical Takeover Banner
         let bannerEl = document.getElementById('critical-takeover-banner');
@@ -598,7 +608,8 @@ export class ControlRoomController {
                 const rec1 = this.recommendations.find(r => r.id === 'rec_1');
                 if (rec1) rec1.status = 'approved';
                 this.renderAiRecommendations();
-                alert("🚨 Emergency Redirection Protocol Executed! Dynamic digital signs updated. 12 Crowd Marshals dispatched to Gate C.");
+                // Inline status notification instead of blocking alert()
+                this._showStatusToast('🚨 Emergency Redirection Protocol Executed! Dynamic digital signs updated. 12 Crowd Marshals dispatched to Gate C.');
             });
 
             document.getElementById('btn-resolve-emergency').addEventListener('click', () => {
@@ -629,4 +640,30 @@ export class ControlRoomController {
     }
 
     bindGlobalControls() {}
+
+    /**
+     * Displays a non-blocking inline status toast notification.
+     * Replaces alert() calls to avoid blocking the main thread and improve UX.
+     * @param {string} message - The message to display
+     * @param {'success'|'error'|'warning'} [type='success'] - Toast type
+     * @private
+     */
+    _showStatusToast(message, type = 'success') {
+        const colors = {
+            success: 'bg-green-900/90 border-green-500/60 text-green-200',
+            error: 'bg-red-900/90 border-red-500/60 text-red-200',
+            warning: 'bg-yellow-900/90 border-yellow-500/60 text-yellow-200',
+        };
+        const toast = document.createElement('div');
+        toast.setAttribute('role', 'status');
+        toast.setAttribute('aria-live', 'polite');
+        toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 rounded-2xl border shadow-2xl text-sm font-semibold max-w-xl text-center animate-fadeIn ${colors[type] || colors.success}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.4s';
+            setTimeout(() => toast.remove(), 400);
+        }, 4000);
+    }
 }

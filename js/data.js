@@ -32,10 +32,10 @@ export const WASHROOMS_DATA = [
 ];
 
 export const MEDICAL_DATA = [
-    { id: "MED_A", label: "🏥 MEDICAL A (North-East Hub)", type: "med", x: 102.5, z: 102.5, status: "Operational", staffOnDuty: 8, BedsAvailable: 4 },
-    { id: "MED_B", label: "🏥 MEDICAL B (South-East Hub)", type: "med", x: -102.5, z: 102.5, status: "Operational", staffOnDuty: 6, BedsAvailable: 5 },
-    { id: "MED_C", label: "🏥 MEDICAL C (South-West Hub)", type: "med", x: -102.5, z: -102.5, status: "Operational", staffOnDuty: 7, BedsAvailable: 3 },
-    { id: "MED_D", label: "🏥 MEDICAL D (North-West Hub)", type: "med", x: 102.5, z: -102.5, status: "Operational", staffOnDuty: 9, BedsAvailable: 6 }
+    { id: "MED_A", label: "🏥 MEDICAL A (North-East Hub)", type: "med", x: 102.5, z: 102.5, status: "Operational", staffOnDuty: 8, bedsAvailable: 4 },
+    { id: "MED_B", label: "🏥 MEDICAL B (South-East Hub)", type: "med", x: -102.5, z: 102.5, status: "Operational", staffOnDuty: 6, bedsAvailable: 5 },
+    { id: "MED_C", label: "🏥 MEDICAL C (South-West Hub)", type: "med", x: -102.5, z: -102.5, status: "Operational", staffOnDuty: 7, bedsAvailable: 3 },
+    { id: "MED_D", label: "🏥 MEDICAL D (North-West Hub)", type: "med", x: 102.5, z: -102.5, status: "Operational", staffOnDuty: 9, bedsAvailable: 6 }
 ];
 
 export const FOOD_DATA = [

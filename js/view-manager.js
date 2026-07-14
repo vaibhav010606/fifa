@@ -39,6 +39,15 @@ export class ViewManager {
         const target = this.views[targetView];
         if (target) {
             target.classList.remove('view-hidden');
+            // A11y Focus Management: Focus the primary heading or container
+            const heading = target.querySelector('h1, h2, [role="heading"]');
+            if (heading) {
+                heading.setAttribute('tabindex', '-1');
+                heading.focus();
+            } else {
+                target.setAttribute('tabindex', '-1');
+                target.focus();
+            }
         }
 
         // Initialize controllers and mount engine

@@ -22,11 +22,15 @@ export class VolunteerPortalController {
         const tabBtns = document.querySelectorAll('.vol-tab-btn');
         tabBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                tabBtns.forEach(b => b.classList.remove('active', 'bg-white/10', 'border-white/30', 'text-white'));
-                tabBtns.forEach(b => b.classList.add('text-white/60', 'hover:text-white', 'hover:bg-white/5'));
-                
+                tabBtns.forEach(b => {
+                    b.classList.remove('active', 'bg-white/10', 'border-white/30', 'text-white');
+                    b.classList.add('text-white/60', 'hover:text-white', 'hover:bg-white/5');
+                    b.setAttribute('aria-selected', 'false'); // A11y: deactivate all tabs
+                });
+
                 btn.classList.add('active', 'bg-white/10', 'border-white/30', 'text-white');
                 btn.classList.remove('text-white/60', 'hover:text-white', 'hover:bg-white/5');
+                btn.setAttribute('aria-selected', 'true'); // A11y: mark selected tab
 
                 this.activeTab = btn.dataset.tab;
                 this.renderCurrentTab();
@@ -155,7 +159,7 @@ export class VolunteerPortalController {
             micBtn.addEventListener('click', () => {
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
                 if (!SpeechRecognition) {
-                    alert("Speech recognition not supported in this browser.");
+                    this._showInlineError('Speech recognition is not supported in this browser. Please type your field report.');
                     return;
                 }
                 const recognition = new SpeechRecognition();
@@ -196,7 +200,7 @@ export class VolunteerPortalController {
 
         const cd = checkActionCooldown('vol_dispatch_user', 1500);
         if (!cd.allowed) {
-            alert(`⚠️ Security & Anti-Spam Cooldown: Please wait ${cd.remainingSec}s before dispatching another field report.`);
+            this._showInlineError(`⚠️ Anti-Spam Cooldown: Please wait ${cd.remainingSec}s before dispatching another field report.`);
             return;
         }
 
@@ -329,5 +333,32 @@ Respond ONLY with valid JSON:
                 }
             });
         });
+    }
+
+    /**
+     * Displays a non-blocking inline error message near the report input area.
+     * Replaces alert() to keep the UI responsive and accessible.
+     * @param {string} message - Error text to display
+     * @private
+     */
+    _showInlineError(message) {
+        let errEl = document.getElementById('vol-inline-error');
+        if (!errEl) {
+            errEl = document.createElement('div');
+            errEl.id = 'vol-inline-error';
+            errEl.setAttribute('role', 'alert');
+            errEl.setAttribute('aria-live', 'assertive');
+            errEl.className = 'text-red-400 text-xs font-semibold px-2 py-1.5 rounded-lg bg-red-500/10 border border-red-500/30 mt-1';
+            const inputArea = document.getElementById('vol-report-input');
+            if (inputArea && inputArea.parentNode) {
+                inputArea.parentNode.insertAdjacentElement('afterend', errEl);
+            } else {
+                document.getElementById('volunteer-content-area')?.prepend(errEl);
+            }
+        }
+        errEl.textContent = message;
+        setTimeout(() => {
+            if (errEl) errEl.remove();
+        }, 4000);
     }
 }

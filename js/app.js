@@ -5,8 +5,13 @@ import { FanPortalController } from './fan-portal.js';
 import { ControlRoomController } from './control-room.js';
 import { VolunteerPortalController } from './volunteer-portal.js';
 import { MatchPulseTestSuite } from './test-suite.js';
-import { toggleAccessibilityMode, sanitizeInput } from './utils.js';
+import { toggleAccessibilityMode, restoreAccessibilityPreferences, sanitizeInput } from './utils.js';
 import { ViewManager } from './view-manager.js';
+import { PREDICTIVE_DENSITY_DATA, GENAI_SIGNAGE_PRESETS, SUSTAINABILITY_METRICS } from './data.js';
+import { CONFIG } from './config.js';
+
+// Expose key data to the global diagnostics bridge for runtime verification
+window.__MATCHPULSE_DATA__ = { PREDICTIVE_DENSITY_DATA, GENAI_SIGNAGE_PRESETS, SUSTAINABILITY_METRICS };
 
 class MatchPulseApp {
     constructor() {
@@ -22,6 +27,7 @@ class MatchPulseApp {
     }
 
     async init() {
+        restoreAccessibilityPreferences(); // A11y: Restore high-contrast preference from localStorage
         this.fanController = new FanPortalController(this);
         this.controlController = new ControlRoomController(this);
         this.volunteerController = new VolunteerPortalController(this);
@@ -33,18 +39,29 @@ class MatchPulseApp {
 
     connectTelemetryStream() {
         // Efficiency: True real-time push data via Server-Sent Events (SSE)
+        // Security: Pass JWT as query param (EventSource does not support custom headers)
         try {
-            const eventSource = new EventSource('/api/telemetry/stream');
+            const token = sessionStorage.getItem('matchpulse_token');
+            const url = token
+                ? `/api/telemetry/stream?token=${encodeURIComponent(token)}`
+                : '/api/telemetry/stream';
+            const eventSource = new EventSource(url);
             eventSource.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                console.log("📡 [SSE] Live Telemetry received:", data);
-                // Real app would dispatch this data to the engine and UI state here
+                try {
+                    const data = JSON.parse(event.data);
+                    // Dispatch telemetry data to store for reactive UI updates
+                    if (data.event === 'telemetry_update' && data.payload) {
+                         import('./store.js').then(module => {
+                             module.appStore.setState('liveTelemetry', data.payload);
+                         });
+                    }
+                } catch (e) { /* ignore malformed SSE payloads */ }
             };
-            eventSource.onerror = (error) => {
-                console.warn("📡 [SSE] Connection lost, retrying...", error);
+            eventSource.onerror = () => {
+                // Silent retry — EventSource handles reconnect automatically
             };
         } catch (e) {
-            console.error("Failed to connect to SSE telemetry stream.", e);
+            console.error('Failed to connect to SSE telemetry stream.', e);
         }
     }
 
@@ -89,7 +106,7 @@ class MatchPulseApp {
 
 
 
-        document.getElementById('modal-btn-login')?.addEventListener('click', () => {
+        document.getElementById('modal-btn-login')?.addEventListener('click', async () => {
             const idVal = sanitizeInput(document.getElementById('staff-id-input')?.value || '', 20);
             const passVal = sanitizeInput(document.getElementById('staff-pass-input')?.value || '', 20);
 
@@ -99,9 +116,38 @@ class MatchPulseApp {
 
             const errorEl = document.getElementById('staff-auth-error');
             if (idValid && passValid) {
-                if (errorEl) errorEl.classList.add('hidden');
-                this.closeStaffAuthModal();
-                this.switchView('control-room');
+                try {
+                    const btn = document.getElementById('modal-btn-login');
+                    const origText = btn.textContent;
+                    btn.textContent = 'Authenticating...';
+                    btn.disabled = true;
+
+                    const res = await fetch(`${CONFIG.API_URL}/api/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: idVal, password: passVal })
+                    });
+                    
+                    if (!res.ok) throw new Error('Invalid credentials');
+                    
+                    const data = await res.json();
+                    sessionStorage.setItem('matchpulse_token', data.token); // Store JWT
+                    
+                    if (errorEl) errorEl.classList.add('hidden');
+                    this.closeStaffAuthModal();
+                    this.switchView('control-room');
+                } catch (e) {
+                    if (errorEl) {
+                        errorEl.textContent = '⚠️ ' + e.message;
+                        errorEl.classList.remove('hidden');
+                    }
+                } finally {
+                    const btn = document.getElementById('modal-btn-login');
+                    if (btn) {
+                        btn.textContent = 'Authenticate';
+                        btn.disabled = false;
+                    }
+                }
             } else {
                 if (errorEl) {
                     errorEl.textContent = !idValid
@@ -122,15 +168,6 @@ class MatchPulseApp {
             }
         });
 
-        document.getElementById('modal-btn-quick-login')?.addEventListener('click', () => {
-            const idEl = document.getElementById('staff-id-input');
-            const passEl = document.getElementById('staff-pass-input');
-            if (idEl) idEl.value = 'ST-8821';
-            if (passEl) passEl.value = '2026';
-            this.closeStaffAuthModal();
-            this.switchView('control-room');
-        });
-
         document.getElementById('modal-btn-close')?.addEventListener('click', () => {
             this.closeStaffAuthModal();
         });
@@ -147,9 +184,6 @@ class MatchPulseApp {
 
         document.getElementById('fan-btn-switch-control')?.addEventListener('click', () => {
             this.openStaffAuthModal();
-        });
-        document.getElementById('fan-btn-switch-control')?.addEventListener('click', (e) => {
-            this.openStaffAuthModal(e.currentTarget);
         });
 
         document.getElementById('fan-btn-home')?.addEventListener('click', (e) => {
@@ -197,20 +231,17 @@ class MatchPulseApp {
 
         const w = container.clientWidth || container.offsetWidth || 0;
         const h = container.clientHeight || container.offsetHeight || 0;
-        console.log(`mountEngine(${mode}): container=${containerId} size=${w}x${h}`);
 
         // Efficiency: skip full teardown if same mode is already mounted
         if (this.engine && this.lastEngineMode === mode) {
-            console.log('mountEngine: same mode already active, skipping recreation.');
             return;
         }
 
-        // Destroy previous engine instance fully
+        // Destroy previous engine instance using proper dispose() method
         if (this.engine) {
             try {
-                if (this.engine.resizeObserver) this.engine.resizeObserver.disconnect();
-                this.engine.renderer.dispose();
-            } catch(e) { /* ignore */ }
+                this.engine.dispose();
+            } catch (e) { /* ignore */ }
             this.engine = null;
         }
 
@@ -221,8 +252,7 @@ class MatchPulseApp {
         try {
             this.engine = new StadiumEngine(container, mode);
             this.lastEngineMode = mode;
-            console.log('mountEngine: engine created successfully');
-        } catch(e) {
+        } catch (e) {
             console.error('mountEngine: StadiumEngine creation failed:', e);
         }
     }

@@ -148,7 +148,8 @@ export class FanPortalController {
                 <!-- Multilingual & Voice Controls Bar -->
                 <div class="flex items-center justify-between border-b border-white/10 pb-2 mb-2 shrink-0">
                     <div class="flex items-center gap-1.5">
-                        <span class="text-[11px] text-white/50 font-semibold">🌐 Lang:</span>
+                        <label for="ai-lang-select" class="sr-only">AI response language</label>
+                        <span class="text-[11px] text-white/50 font-semibold" aria-hidden="true">🌐 Lang:</span>
                         <select id="ai-lang-select" class="bg-white/10 text-white text-[11px] font-semibold px-2 py-1 rounded-lg border border-white/15 focus:outline-none cursor-pointer">
                             <option value="EN" ${this.currentLang === 'EN' ? 'selected' : ''}>🇺🇸 English</option>
                             <option value="ES" ${this.currentLang === 'ES' ? 'selected' : ''}>🇪🇸 Español</option>
@@ -235,7 +236,10 @@ export class FanPortalController {
             micBtn.addEventListener('click', () => {
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
                 if (!SpeechRecognition) {
-                    alert("Voice recognition is not supported in this browser. Please type your query or use Chrome/Edge.");
+                    // Non-blocking inline feedback instead of alert()
+                    announceToScreenReader('Voice recognition is not supported in this browser. Please type your query or use Chrome/Edge.');
+                    const inputArea = document.getElementById('ai-user-input');
+                    if (inputArea) inputArea.placeholder = '⚠️ Voice not supported — type your question here...';
                     return;
                 }
                 const recognition = new SpeechRecognition();
