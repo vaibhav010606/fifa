@@ -1,0 +1,9 @@
+node_modules
+dist
+.env
+coverage
+gcloud.zip
+mingit.zip
+mingit
+env.yaml
+*.bat

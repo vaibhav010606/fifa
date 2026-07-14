@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>3D Render Test</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#050508; width:100vw; height:100vh; overflow:hidden; }
+  #container { width:100vw; height:100vh; position:relative; }
+  #status { position:fixed; top:10px; left:10px; color:#fff; font:14px monospace; z-index:100; background:rgba(0,0,0,0.7); padding:8px 12px; border-radius:6px; }
+</style>
+</head>
+<body>
+<div id="status">Loading Three.js...</div>
+<div id="container"></div>
+
+<script type="module">
+import * as THREE from '/node_modules/three/build/three.module.js';
+
+const status = document.getElementById('status');
+const container = document.getElementById('container');
+
+try {
+  status.textContent = 'Creating scene...';
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x050508);
+
+  const w = container.clientWidth;
+  const h = container.clientHeight;
+  status.textContent = `Container: ${w}x${h}`;
+
+  const camera = new THREE.PerspectiveCamera(45, w / h, 1, 3000);
+  camera.position.set(0, 200, 400);
+  camera.lookAt(0, 0, 0);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(w, h);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.domElement.style.position = 'absolute';
+  renderer.domElement.style.top = '0';
+  renderer.domElement.style.left = '0';
+  container.appendChild(renderer.domElement);
+
+  // Green pitch
+  const pitch = new THREE.Mesh(
+    new THREE.PlaneGeometry(160, 105),
+    new THREE.MeshBasicMaterial({ color: 0x15803d })
+  );
+  pitch.rotation.x = -Math.PI / 2;
+  scene.add(pitch);
+
+  // White sphere
+  const sphere = new THREE.Mesh(
+    new THREE.SphereGeometry(20, 32, 32),
+    new THREE.MeshBasicMaterial({ color: 0xffffff })
+  );
+  sphere.position.set(0, 30, 0);
+  scene.add(sphere);
+
+  // Ambient light
+  scene.add(new THREE.AmbientLight(0xffffff, 1));
+
+  status.textContent = `✅ THREE.js OK — Container: ${w}x${h} — Canvas: ${renderer.domElement.width}x${renderer.domElement.height}`;
+  status.style.color = '#4ade80';
+
+  function animate() {
+    requestAnimationFrame(animate);
+    sphere.rotation.y += 0.01;
+    renderer.render(scene, camera);
+  }
+  animate();
+
+} catch(e) {
+  status.textContent = '❌ ERROR: ' + e.message;
+  status.style.color = '#f87171';
+  console.error(e);
+}
+</script>
+</body>
+</html>

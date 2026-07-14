@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="MatchPulse AI — Real-time 3D Digital Twin for FIFA World Cup 2026. Fan Portal, Volunteer Copilot, and Committee Control Room." />
+    <!-- Security: Content-Security-Policy restricts resource loading to trusted origins -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.groq.com; worker-src blob:;" />
+    <title>MatchPulse AI — FIFA World Cup 2026 Digital Twin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body class="bg-[#050508] text-white overflow-hidden">
+    <!-- Accessibility: ARIA Live Region for 3D Engine Announcements -->
+    <div id="a11y-engine-announcer" aria-live="assertive" class="sr-only"></div>
+
+    <!-- Accessibility: Skip to main content link for keyboard users (WCAG 2.4.1) -->
+    <a href="#main-content" class="skip-nav absolute -top-10 left-0 bg-purple-600 text-white p-2 z-[100] focus:top-0">Skip to main content</a>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-[#050508] z-50 flex flex-col items-center justify-center transition-opacity duration-500">
+        <div class="spinner mb-5"></div>
+        <p class="text-white/80 font-bebas text-3xl tracking-widest text-glow-ai">GENERATING 3D DIGITAL TWIN...</p>
+        <span class="text-xs text-white/50 tracking-wider mt-1 font-mono-num">Olympic Stadium · FIFA World Cup 2026 · Telemetry Syncing</span>
+    </div>
+
+    <!-- =========================================================================
+         SCREEN 1: LANDING / ROLE GATE (#view-landing)
+         ========================================================================= -->
+    <section id="view-landing" class="view-section flex flex-col items-center justify-center relative px-6 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900/30 via-[#0a0a0f] to-[#050508]">
+        
+        <!-- Top Navigation Bar (Language, Diagnostics & Accessibility) -->
+        <div class="absolute top-6 right-6 flex flex-wrap items-center gap-2 sm:gap-3 z-30">
+            <button id="btn-global-a11y" title="Toggle High Contrast & Accessibility Mode" aria-pressed="false" aria-label="Toggle high contrast accessibility mode" class="bg-white/10 hover:bg-yellow-500/20 text-white/80 hover:text-yellow-300 text-xs px-3 py-1.5 rounded-xl border border-white/20 transition-all flex items-center gap-1.5 cursor-pointer font-semibold">
+                <span aria-hidden="true">♿</span> <span class="hidden sm:inline">High Contrast</span>
+            </button>
+            <button id="btn-global-diag" title="Run Automated Rubric & Verification Diagnostics" aria-label="Run diagnostics suite" class="bg-purple-500/20 hover:bg-purple-500/40 text-purple-200 hover:text-white text-xs px-3 py-1.5 rounded-xl border border-purple-500/40 transition-all flex items-center gap-1.5 cursor-pointer font-semibold shadow-lg shadow-purple-900/30">
+                <span aria-hidden="true">🧪</span> <span class="hidden sm:inline">Diagnostics Suite</span>
+            </button>
+            <div class="flex items-center gap-2 bg-black/40 px-2.5 py-1 rounded-xl border border-white/10">
+                <span class="text-xs text-white/50 font-medium" aria-hidden="true">🌐</span>
+                <label for="lang-select-landing" class="sr-only">Select language</label>
+                <select id="lang-select-landing" class="lang-select custom-select bg-transparent text-white text-xs py-1 rounded-lg focus:outline-none cursor-pointer" aria-label="Select language">
+                    <option value="EN" class="bg-black text-white">English (EN)</option>
+                    <option value="ES" class="bg-black text-white">Español (ES)</option>
+                    <option value="FR" class="bg-black text-white">Français (FR)</option>
+                    <option value="AR" class="bg-black text-white">العربية (AR)</option>
+                </select>
+            </div>
+        </div>
+
+
+        <div id="main-content" class="max-w-4xl w-full text-center space-y-10 animate-fadeIn">
+            <div class="space-y-3">
+                <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-purple-500/20 border border-purple-500/40 text-purple-300 text-xs font-semibold tracking-wider uppercase shadow-lg shadow-purple-900/40">
+                    <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
+                    <span>FIFA WORLD CUP 2026 · LIVE 3D DIGITAL TWIN</span>
+                </div>
+                <h1 class="font-bebas text-6xl sm:text-7xl md:text-8xl tracking-widest text-white text-glow">
+                    MATCHPULSE — STADIUM AI
+                </h1>
+                <p id="landing-subtitle" class="text-lg sm:text-xl text-white/70 font-light tracking-wide max-w-2xl mx-auto italic">
+                    "Know your stadium before you arrive"
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-5xl mx-auto pt-4">
+                <button id="btn-role-fan" aria-label="Enter Fan Portal — interactive 3D stadium map and AI assistant" class="glass-panel glass-panel-interactive p-6 rounded-3xl border border-white/15 hover:border-blue-500/60 transition-all text-left group flex flex-col justify-between h-56 shadow-2xl cursor-pointer">
+                    <div class="space-y-3">
+                        <div class="w-12 h-12 rounded-2xl bg-blue-600/30 border border-blue-500/40 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform shadow-lg">
+                            🎟️
+                        </div>
+                        <h2 class="font-bebas text-2xl tracking-widest text-white group-hover:text-blue-300 transition-colors">
+                            I'M A FAN
+                        </h2>
+                        <p class="text-xs text-white/60 leading-relaxed">
+                            Enter the interactive 3D stadium map, find your seat, talk to the AI Assistant, and explore live concourse wayfinding.
+                        </p>
+                    </div>
+                    <div class="flex items-center text-xs font-semibold text-blue-400 gap-1 pt-4 group-hover:translate-x-1 transition-transform">
+                        <span>Enter Fan Portal</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </button>
+
+                <button id="btn-role-volunteer" aria-label="Enter Volunteer Field Copilot — AI incident reporting and dispatch" class="glass-panel glass-panel-interactive p-6 rounded-3xl border border-white/15 hover:border-yellow-500/60 transition-all text-left group flex flex-col justify-between h-56 shadow-2xl cursor-pointer">
+                    <div class="space-y-3">
+                        <div class="w-12 h-12 rounded-2xl bg-yellow-600/30 border border-yellow-500/40 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform shadow-lg">
+                            🧑‍🔧
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <h2 class="font-bebas text-2xl tracking-widest text-white group-hover:text-yellow-300 transition-colors">
+                                VOLUNTEER / STEWARD
+                            </h2>
+                            <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 uppercase">Field Unit</span>
+                        </div>
+                        <p class="text-xs text-white/60 leading-relaxed">
+                            Field Copilot for natural language incident reporting, zone task claims, and real-time concourse dispatch telemetry.
+                        </p>
+                    </div>
+                    <div class="flex items-center text-xs font-semibold text-yellow-400 gap-1 pt-4 group-hover:translate-x-1 transition-transform">
+                        <span>Enter Field Copilot</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </button>
+
+                <button id="btn-role-staff" aria-label="Enter Committee Control Room — requires staff credentials" class="glass-panel glass-panel-interactive p-6 rounded-3xl border border-white/15 hover:border-purple-500/60 transition-all text-left group flex flex-col justify-between h-56 shadow-2xl cursor-pointer">
+                    <div class="space-y-3">
+                        <div class="w-12 h-12 rounded-2xl bg-purple-600/30 border border-purple-500/40 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform shadow-lg">
+                            🧑💼
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <h2 class="font-bebas text-2xl tracking-widest text-white group-hover:text-purple-300 transition-colors">
+                                COMMITTEE / STAFF
+                            </h2>
+                            <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/30 uppercase">Restricted</span>
+                        </div>
+                        <p class="text-xs text-white/60 leading-relaxed">
+                            Mission-control room for density heatmaps, facility health telemetry, volunteer dispatch, and autonomous AI recommendations.
+                        </p>
+                    </div>
+                    <div class="flex items-center text-xs font-semibold text-purple-400 gap-1 pt-4 group-hover:translate-x-1 transition-transform">
+                        <span>Requires Staff ID</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    </div>
+                </button>
+            </div>
+
+
+            <p class="text-xs text-white/40 font-mono-num pt-6">
+                Powered by MatchPulse Digital Twin Engine v2.6 · Official Tournament Architecture
+            </p>
+        </div>
+    </section>
+
+    <!-- Staff Security Gate Modal — accessible dialog -->
+    <div id="staff-auth-modal"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="staff-modal-title"
+         aria-hidden="true"
+         class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md items-center justify-center px-4 animate-fadeIn">
+        <div class="glass-panel p-8 rounded-3xl max-w-md w-full border border-purple-500/40 shadow-2xl space-y-6">
+            <div class="flex items-center justify-between border-b border-white/10 pb-4">
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl" aria-hidden="true">🔐</span>
+                    <div>
+                        <h3 id="staff-modal-title" class="font-bebas text-2xl tracking-widest text-white">COMMITTEE SECURITY GATE</h3>
+                        <p class="text-xs text-white/50">Authorized Tournament Personnel Only</p>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-[10px] text-white/50 tracking-widest uppercase font-semibold mb-1" for="staff-id-input">STAFF CREDENTIAL ID</label>
+                    <!-- Security: no hardcoded value — user must enter credentials -->
+                    <input type="text" id="staff-id-input" placeholder="e.g. ST-8821" autocomplete="off" class="w-full bg-white/5 text-white text-sm px-4 py-3 rounded-xl border border-white/15 focus:outline-none focus:border-purple-500 font-mono-num" />
+                </div>
+                <div>
+                    <label class="block text-[10px] text-white/50 tracking-widest uppercase font-semibold mb-1" for="staff-pass-input">SECURITY PASSCODE</label>
+                    <!-- Security: no hardcoded value, autocomplete off -->
+                    <input type="password" id="staff-pass-input" placeholder="••••••••" autocomplete="off" class="w-full bg-white/5 text-white text-sm px-4 py-3 rounded-xl border border-white/15 focus:outline-none focus:border-purple-500 font-mono-num" />
+                </div>
+                <!-- Inline validation error (replaces alert()) -->
+                <div id="staff-auth-error" class="hidden text-red-400 text-xs font-medium px-1" role="alert" aria-live="assertive"></div>
+
+                <div class="pt-2 flex flex-col gap-2.5">
+                    <button id="modal-btn-login" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold text-sm py-3.5 rounded-xl transition-all shadow-lg shadow-purple-600/40 cursor-pointer">
+                        ⚡ Authenticate & Enter Control Room
+                    </button>
+                    <button id="modal-btn-quick-login" class="w-full bg-white/10 hover:bg-white/20 text-purple-300 font-semibold text-xs py-2.5 rounded-xl border border-purple-500/30 transition-all cursor-pointer">
+                        🚀 Quick Demo Login as Lead Operations
+                    </button>
+                    <button id="modal-btn-close" class="w-full text-center text-xs text-white/50 hover:text-white py-2 cursor-pointer transition-colors">
+                        Cancel & Return to Role Selector
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         SCREEN 2: FAN PORTAL (#view-fan)
+         ========================================================================= -->
+    <section id="view-fan" class="view-section view-hidden flex flex-col bg-[#050508]">
+        <header class="h-14 px-5 glass-panel border-b border-white/10 flex items-center justify-between z-20 shrink-0">
+            <div class="flex items-center gap-4">
+                <h1 class="font-bebas text-2xl sm:text-3xl tracking-widest text-white text-glow flex items-center gap-2.5">
+                    <span>MATCHPULSE</span>
+                    <span class="text-xs font-sans font-semibold px-2.5 py-0.5 rounded bg-green-500/20 text-green-400 border border-green-500/30">MATCH 42 · LIVE</span>
+                </h1>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <label for="fan-lang-select" class="sr-only">Select language</label>
+                <select id="fan-lang-select" class="lang-select custom-select bg-white/10 text-white text-xs px-3 py-1.5 rounded-xl border border-white/20 focus:outline-none cursor-pointer" aria-label="Select language">
+                    <option value="EN">EN</option>
+                    <option value="ES">ES</option>
+                    <option value="FR">FR</option>
+                    <option value="AR">AR</option>
+                </select>
+                
+                <button id="fan-btn-reset-cam" aria-label="Reset 3D map camera to default view" class="bg-white/10 hover:bg-white/20 text-white text-xs px-3.5 py-1.5 rounded-xl transition-colors font-medium border border-white/15 cursor-pointer">
+                    Reset Camera
+                </button>
+                <button id="fan-btn-switch-control" aria-label="Switch to Committee Control Room portal" class="bg-purple-600/30 hover:bg-purple-600/50 text-purple-300 text-xs px-3.5 py-1.5 rounded-xl transition-colors font-medium border border-purple-500/40 cursor-pointer hidden sm:block">
+                    🧑💼 Committee Portal
+                </button>
+                <button id="fan-btn-home" aria-label="Exit fan portal and return to role selection" class="bg-white/5 hover:bg-white/15 text-white/70 text-xs px-3 py-1.5 rounded-xl transition-colors font-medium border border-white/10 cursor-pointer">
+                    🏠 Exit
+                </button>
+            </div>
+        </header>
+
+        <div class="fan-layout flex-1 relative overflow-hidden">
+            <aside class="h-full glass-panel border-r border-white/10 flex flex-col z-10 overflow-hidden" aria-label="Fan portal controls">
+                <!-- ARIA: tablist pattern for keyboard navigation of tabs (WCAG 1.3.1, 4.1.2) -->
+                <nav role="tablist" aria-label="Fan portal sections" class="flex items-center gap-1 p-2 border-b border-white/10 overflow-x-auto shrink-0 bg-black/40">
+                    <button role="tab" aria-selected="true"  aria-controls="fan-tab-content" id="tab-ai"         class="fan-tab-btn active bg-white/10 border border-white/30 text-white text-xs font-semibold px-3 py-2 rounded-xl shrink-0 flex items-center gap-1.5 cursor-pointer" data-tab="ai">        <span aria-hidden="true">🤖</span> AI Assistant</button>
+                    <button role="tab" aria-selected="false" aria-controls="fan-tab-content" id="tab-wayfinder"  class="fan-tab-btn text-white/60 hover:text-white hover:bg-white/5 text-xs font-medium px-3 py-2 rounded-xl shrink-0 flex items-center gap-1.5 cursor-pointer" data-tab="wayfinder">  <span aria-hidden="true">🧭</span> Wayfinder</button>
+                    <button role="tab" aria-selected="false" aria-controls="fan-tab-content" id="tab-transport"  class="fan-tab-btn text-white/60 hover:text-white hover:bg-white/5 text-xs font-medium px-3 py-2 rounded-xl shrink-0 flex items-center gap-1.5 cursor-pointer" data-tab="transport">  <span aria-hidden="true">🚌</span> Transport</button>
+                    <button role="tab" aria-selected="false" aria-controls="fan-tab-content" id="tab-access"     class="fan-tab-btn text-white/60 hover:text-white hover:bg-white/5 text-xs font-medium px-3 py-2 rounded-xl shrink-0 flex items-center gap-1.5 cursor-pointer" data-tab="access">     <span aria-hidden="true">♿</span> Access</button>
+                    <button role="tab" aria-selected="false" aria-controls="fan-tab-content" id="tab-food"       class="fan-tab-btn text-white/60 hover:text-white hover:bg-white/5 text-xs font-medium px-3 py-2 rounded-xl shrink-0 flex items-center gap-1.5 cursor-pointer" data-tab="food">       <span aria-hidden="true">🍔</span> Food</button>
+                    <button role="tab" aria-selected="false" aria-controls="fan-tab-content" id="tab-seat"       class="fan-tab-btn text-white/60 hover:text-white hover:bg-white/5 text-xs font-medium px-3 py-2 rounded-xl shrink-0 flex items-center gap-1.5 cursor-pointer" data-tab="seat">       <span aria-hidden="true">🎟️</span> My Seat</button>
+                    <button role="tab" aria-selected="false" aria-controls="fan-tab-content" id="tab-alerts"     class="fan-tab-btn text-white/60 hover:text-white hover:bg-white/5 text-xs font-medium px-3 py-2 rounded-xl shrink-0 flex items-center gap-1.5 cursor-pointer" data-tab="alerts">     <span aria-hidden="true">🔔</span> Alerts</button>
+                </nav>
+                <div id="fan-tab-content" role="tabpanel" aria-labelledby="tab-ai" class="flex-1 overflow-y-auto p-4 sm:p-5"></div>
+            </aside>
+
+            <main class="h-full relative overflow-hidden bg-[#0a0a0f]">
+                <div id="fan-map-container" role="application" aria-label="3D Interactive Stadium Map" class="absolute inset-0 w-full h-full z-1"></div>
+                <div id="fan-labels-container" class="absolute inset-0 w-full h-full z-2 pointer-events-none" aria-hidden="true"></div>
+
+                <div class="absolute bottom-6 right-6 glass-panel p-4 rounded-2xl pointer-events-none w-52 border border-white/10 z-10 shadow-2xl">
+                    <h3 class="text-white/60 text-[10px] tracking-[0.2em] font-semibold mb-3 uppercase">3D MAP LEGEND</h3>
+                    <div class="space-y-2 text-xs">
+                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-sm bg-green-500"></div><span class="text-white/85">Gates & Entrances</span></div>
+                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-sm bg-blue-500"></div><span class="text-white/85">Washrooms (WC)</span></div>
+                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-sm bg-red-500"></div><span class="text-white/85">Medical Hubs</span></div>
+                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-sm bg-yellow-500"></div><span class="text-white/85">Food & Beverages</span></div>
+                        <div class="flex items-center gap-2 pt-1 border-t border-white/10"><div class="w-3 h-3 rounded-sm bg-purple-500 shadow-md shadow-purple-500/50"></div><span class="text-purple-300 font-semibold">AI Route / Action</span></div>
+                    </div>
+                </div>
+
+                <div class="absolute bottom-6 left-1/2 -translate-x-1/2 glass-panel text-white/75 text-xs px-5 py-2 rounded-full tracking-wider whitespace-nowrap shadow-xl pointer-events-none z-10 border border-white/15">
+                    Drag to rotate · Scroll to zoom
+                </div>
+            </main>
+        </div>
+    </section>
+
+    <!-- =========================================================================
+         SCREEN 3: COMMITTEE CONTROL ROOM (#view-control-room) - REBALANCED
+         ========================================================================= -->
+    <section id="view-control-room" class="view-section view-hidden bg-[#050508] overflow-hidden">
+        <div class="control-grid">
+            
+            <!-- Area Header -->
+            <header id="control-header" class="area-header"></header>
+
+            <!-- Area Left (Density Top + Facility Health Bottom) -->
+            <aside class="area-left">
+                <div id="control-density-panel" class="flex-1 overflow-hidden min-h-[220px]"></div>
+                <div id="control-facility-panel" class="flex-1 overflow-hidden min-h-[220px]"></div>
+            </aside>
+
+            <!-- Area Center Map -->
+            <main id="control-map-wrapper" class="area-map rounded-2xl overflow-hidden border border-white/10 glass-panel relative">
+                <div id="control-map-controls"></div>
+                <div id="control-map-container" class="absolute inset-0 w-full h-full z-1"></div>
+                <div id="control-labels-container" class="absolute inset-0 w-full h-full z-2 pointer-events-none"></div>
+            </main>
+
+            <!-- Area Center-Bottom Operations Center (Tabs: Incidents & Logistics) -->
+            <section id="control-ops-panel" class="area-ops glass-panel rounded-2xl border border-white/10 overflow-hidden flex flex-col"></section>
+
+            <!-- Area Right AI Recommendations (Vertical Stack) -->
+            <footer id="control-ai-panel" class="area-ai overflow-hidden"></footer>
+        </div>
+    </section>
+
+    <!-- =========================================================================
+         SCREEN 4: VOLUNTEER & STEWARD PORTAL (#view-volunteer)
+         ========================================================================= -->
+    <section id="view-volunteer" class="view-section view-hidden flex flex-col bg-[#050508]">
+        <header class="h-14 px-5 glass-panel border-b border-white/10 flex items-center justify-between z-20 shrink-0">
+            <div class="flex items-center gap-4">
+                <h1 class="font-bebas text-2xl sm:text-3xl tracking-widest text-white text-glow flex items-center gap-2.5">
+                    <span>MATCHPULSE</span>
+                    <span class="text-xs font-sans font-semibold px-2.5 py-0.5 rounded bg-yellow-500/20 text-yellow-300 border border-yellow-500/30">STEWARD & FIELD UNIT</span>
+                </h1>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button id="vol-btn-reset-cam" class="bg-white/10 hover:bg-white/20 text-white text-xs px-3.5 py-1.5 rounded-xl transition-all cursor-pointer">
+                    🔄 Reset Map View
+                </button>
+                <button id="vol-btn-home" class="bg-yellow-600 hover:bg-yellow-500 text-black font-bold text-xs px-3.5 py-1.5 rounded-xl transition-all cursor-pointer">
+                    🏠 Change Role
+                </button>
+            </div>
+        </header>
+
+        <div class="flex-1 flex overflow-hidden relative">
+            <aside class="w-full sm:w-[420px] shrink-0 glass-panel border-r border-white/10 flex flex-col z-10 bg-[#050508]/90 backdrop-blur-md">
+                <div class="p-3 border-b border-white/10 flex gap-2 overflow-x-auto shrink-0">
+                    <button class="vol-tab-btn active bg-white/10 border border-white/30 text-white text-xs font-medium px-3.5 py-2 rounded-xl shrink-0 flex items-center gap-1.5 cursor-pointer" data-tab="copilot"><span>🎙️ AI Field Copilot</span></button>
+                    <button class="vol-tab-btn text-white/60 hover:text-white hover:bg-white/5 text-xs font-medium px-3.5 py-2 rounded-xl shrink-0 flex items-center gap-1.5 cursor-pointer" data-tab="tasks"><span>📋 Assigned Tasks</span></button>
+                </div>
+                <div id="volunteer-content-area" class="flex-1 overflow-y-auto p-4 sm:p-5"></div>
+            </aside>
+
+            <main class="h-full relative overflow-hidden bg-[#0a0a0f] flex-1">
+                <div id="volunteer-map-container" class="absolute inset-0 w-full h-full z-1"></div>
+            </main>
+        </div>
+    </section>
+
+    <!-- Scripts -->
+    <script type="module" src="./js/app.js"></script>
+</body>
+</html>
+

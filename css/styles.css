@@ -1,0 +1,458 @@
+/* css/styles.css - Design System & Layouts for MatchPulse AI (FIFA World Cup 2026 Digital Twin) */
+
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    background: #050508;
+    color: #f1f5f9;
+    font-family: 'DM Sans', sans-serif;
+    overflow: hidden;
+}
+
+/* ─── Keyboard Navigation: focus-visible outlines ─────────────────────────────
+   Only shown when navigating by keyboard (not on mouse click),
+   meeting WCAG 2.1 Success Criterion 2.4.7 Focus Visible.
+   ─────────────────────────────────────────────────────────────────────────── */
+:focus {
+    outline: none; /* Remove default browser outline (replaced by focus-visible) */
+}
+
+:focus-visible {
+    outline: 2px solid #38bdf8; /* sky-400 — vivid, accessible blue */
+    outline-offset: 3px;
+    border-radius: 4px;
+    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.2);
+    transition: outline-offset 0.1s ease;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid #38bdf8;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.25);
+}
+
+/* ─── Skip Navigation Link (WCAG 2.4.1) ──────────────────────────────────────
+   Visually hidden until focused by keyboard user.
+   Slides in from top when Tab is pressed as first interaction.
+   ─────────────────────────────────────────────────────────────────────────── */
+.skip-nav {
+    position: absolute;
+    top: -100px;
+    left: 0;
+    z-index: 200;
+    background: #7c3aed;
+    color: #ffffff;
+    padding: 10px 20px;
+    border-radius: 0 0 12px 0;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: top 0.2s ease;
+    outline: none;
+}
+
+.skip-nav:focus {
+    top: 0;
+    outline: 3px solid #38bdf8;
+    outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.03);
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* Typography Helpers */
+.font-bebas {
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 0.08em;
+}
+
+.font-mono-num {
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.text-glow {
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.35);
+}
+
+.text-glow-ai {
+    text-shadow: 0 0 16px rgba(168, 85, 247, 0.65);
+}
+
+/* Glassmorphism System */
+.glass-panel {
+    background: rgba(12, 12, 18, 0.88);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-panel-interactive:hover {
+    background: rgba(20, 20, 30, 0.95);
+    border-color: rgba(255, 255, 255, 0.22);
+}
+
+.glass-panel-ai {
+    background: rgba(22, 14, 38, 0.88);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(168, 85, 247, 0.35);
+    box-shadow: 0 4px 24px rgba(168, 85, 247, 0.12);
+}
+
+.border-ai {
+    border-color: rgba(168, 85, 247, 0.45);
+}
+
+.text-ai {
+    color: #c084fc;
+}
+
+.bg-ai-glow {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(139, 92, 246, 0.05));
+}
+
+/* Animations & Keyframes */
+@keyframes pulse-red {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6);
+        border-color: rgba(239, 68, 68, 0.8);
+    }
+    50% {
+        box-shadow: 0 0 25px 8px rgba(239, 68, 68, 0.3);
+        border-color: rgba(239, 68, 68, 1);
+    }
+}
+
+@keyframes pulse-ai {
+    0%, 100% {
+        box-shadow: 0 0 12px rgba(168, 85, 247, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 24px rgba(168, 85, 247, 0.6);
+    }
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.animate-pulse-red {
+    animation: pulse-red 2s infinite ease-in-out;
+}
+
+.animate-pulse-ai {
+    animation: pulse-ai 2.5s infinite ease-in-out;
+}
+
+/* 3D Facility Labels (CSS2DRenderer) */
+.facility-label {
+    color: #ffffff;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    font-size: 11px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    background: rgba(6, 6, 10, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+    pointer-events: auto;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+.facility-label:hover {
+    transform: scale(1.08);
+    z-index: 50;
+}
+
+/* Smart Abbreviated & Dot Labels for Committee Control Room */
+.facility-label-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    pointer-events: auto;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+    border: 2px solid rgba(255, 255, 255, 0.8);
+}
+
+.facility-label-dot:hover {
+    transform: scale(1.4);
+    z-index: 100;
+}
+
+.facility-label-dot:hover::after {
+    content: attr(data-full-text);
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(6, 6, 12, 0.95);
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+    pointer-events: none;
+    z-index: 101;
+}
+
+.facility-label-abbr {
+    color: #ffffff;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 10px;
+    padding: 3px 6px;
+    border-radius: 4px;
+    background: rgba(8, 8, 14, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    white-space: nowrap;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
+    pointer-events: auto;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.facility-label-abbr:hover {
+    transform: scale(1.15);
+    z-index: 50;
+}
+
+.label-gate { border-color: #22c55e; color: #4ade80; background-color: rgba(34, 197, 94, 0.15); }
+.label-wc { border-color: #3b82f6; color: #60a5fa; background-color: rgba(59, 130, 246, 0.15); }
+.label-med { border-color: #ef4444; color: #f87171; background-color: rgba(239, 68, 68, 0.15); }
+.label-food { border-color: #eab308; color: #fde047; background-color: rgba(234, 179, 8, 0.15); }
+
+.facility-down {
+    border-color: #ef4444 !important;
+    background: rgba(127, 29, 29, 0.95) !important;
+    color: #fecaca !important;
+    animation: pulse-red 1.5s infinite ease-in-out;
+}
+
+.facility-degraded {
+    border-color: #eab308 !important;
+    background: rgba(113, 63, 18, 0.95) !important;
+    color: #fef08a !important;
+}
+
+/* Custom Select Dropdowns */
+select.custom-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%22//www.w3.org/2000/svg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.4-12.8z%22/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right .8rem top 50%;
+    background-size: .65rem auto;
+}
+
+/* Layout Views */
+.view-section {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    transition: opacity 0.35s ease, visibility 0.35s ease;
+}
+
+.view-hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* Fan Portal Layout (34% left menu, 66% right map) */
+.fan-layout {
+    display: grid;
+    grid-template-columns: 36% 64%;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.fan-layout > main {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+    overflow: hidden;
+}
+
+#fan-map-container,
+#fan-labels-container {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+@media (max-width: 1024px) {
+    .fan-layout {
+        grid-template-columns: 45% 55%;
+    }
+}
+
+@media (max-width: 768px) {
+    .fan-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: 45vh 55vh;
+    }
+}
+
+/* REBALANCED Committee Control Room Layout (Strictly for Committee) */
+.control-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr 365px;
+    grid-template-rows: 60px 1fr 220px;
+    grid-template-areas:
+        "header header header"
+        "left map ai"
+        "left ops ai";
+    gap: 12px;
+    padding: 12px;
+    width: 100vw;
+    height: 100vh;
+    background: #050508;
+}
+
+.area-header { grid-area: header; }
+.area-left { grid-area: left; display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
+.area-map { grid-area: map; position: relative; overflow: hidden; min-width: 200px; min-height: 200px; }
+.area-ops { grid-area: ops; overflow: hidden; }
+.area-ai { grid-area: ai; overflow: hidden; }
+
+#control-map-container,
+#control-labels-container {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+@media (max-width: 1280px) {
+    .control-grid {
+        grid-template-columns: 250px 1fr 330px;
+    }
+}
+
+/* Status Badges */
+.badge-operational { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.4); }
+.badge-degraded { background: rgba(234, 179, 8, 0.15); color: #fde047; border: 1px solid rgba(234, 179, 8, 0.4); }
+.badge-down { background: rgba(239, 68, 68, 0.18); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+
+/* Tab Navigation Buttons */
+.tab-btn {
+    transition: all 0.2s ease;
+}
+.tab-btn.active {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+}
+
+/* Loading Overlay Spinner */
+.spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    border-top-color: #a855f7;
+    animation: spin 0.9s ease-in-out infinite;
+}
+
+/* Accessibility & High Contrast AAA Mode (.a11y-high-contrast) */
+body.a11y-high-contrast {
+    background: #000000 !important;
+    color: #ffffff !important;
+    font-size: 105% !important;
+}
+
+body.a11y-high-contrast .glass-panel {
+    background: rgba(15, 15, 20, 0.98) !important;
+    border: 2px solid #facc15 !important;
+    box-shadow: 0 0 15px rgba(250, 204, 21, 0.25) !important;
+}
+
+body.a11y-high-contrast h1,
+body.a11y-high-contrast h2,
+body.a11y-high-contrast h3,
+body.a11y-high-contrast h4,
+body.a11y-high-contrast h5,
+body.a11y-high-contrast h6 {
+    color: #ffffff !important;
+    text-shadow: none !important;
+}
+
+body.a11y-high-contrast text,
+body.a11y-high-contrast p,
+body.a11y-high-contrast span,
+body.a11y-high-contrast label {
+    color: #ffffff !important;
+    text-shadow: 0 1px 2px #000000 !important;
+}
+
+body.a11y-high-contrast a {
+    color: #38bdf8 !important;
+    text-decoration: underline !important;
+}
+
+body.a11y-high-contrast button,
+body.a11y-high-contrast input,
+body.a11y-high-contrast select {
+    border: 2px solid #facc15 !important;
+    color: #ffffff !important;
+}
+
+body.a11y-high-contrast button:focus-visible,
+body.a11y-high-contrast input:focus-visible,
+body.a11y-high-contrast select:focus-visible {
+    outline: 3px solid #38bdf8 !important;
+    outline-offset: 3px !important;
+    box-shadow: 0 0 0 5px rgba(56, 189, 248, 0.4) !important;
+}
+
+/* Screen reader only utility — visually hidden but accessible */
+.sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
