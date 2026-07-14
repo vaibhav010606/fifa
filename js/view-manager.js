@@ -1,32 +1,42 @@
 // js/view-manager.js
 // Handles view switching and modal state logic to decouple from AppController.
 
+import { appStore } from './store.js';
+
 export class ViewManager {
     constructor(appController) {
         this.app = appController;
-        this.currentView = 'landing';
         this._modalTrigger = null;
         this._trapFocus = null;
         this._escapeHandler = null;
-    }
 
-    switchView(targetView, triggerElement = null) {
-        const views = {
+        // Cache view elements once to eliminate redundant DOM queries
+        this.views = {
             'landing': document.getElementById('view-landing'),
             'fan': document.getElementById('view-fan'),
             'control-room': document.getElementById('view-control-room'),
             'volunteer': document.getElementById('view-volunteer')
         };
 
+        // State-driven UI binding (Reactivity)
+        appStore.subscribe('currentView', (targetView) => {
+            this._renderView(targetView);
+        });
+    }
+
+    // Mutates state, triggering the reactive render automatically
+    switchView(targetView, triggerElement = null) {
+        appStore.setState('currentView', targetView);
+    }
+
+    _renderView(targetView) {
         // Hide all
-        Object.values(views).forEach(v => {
+        Object.values(this.views).forEach(v => {
             if (v) v.classList.add('view-hidden');
         });
 
-        this.currentView = targetView;
-
         // Show target
-        const target = views[targetView];
+        const target = this.views[targetView];
         if (target) {
             target.classList.remove('view-hidden');
         }

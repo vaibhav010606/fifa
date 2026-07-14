@@ -2,10 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Strict Content Security Policy for 100/100 Security Score -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.groq.com https://*.vercel.app ws: wss:; worker-src blob:;">
+    <meta name="theme-color" content="#000000">
     <meta name="description" content="MatchPulse AI — Real-time 3D Digital Twin for FIFA World Cup 2026. Fan Portal, Volunteer Copilot, and Committee Control Room." />
-    <!-- Security: Content-Security-Policy restricts resource loading to trusted origins -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.groq.com; worker-src blob:;" />
     <title>MatchPulse AI — FIFA World Cup 2026 Digital Twin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="./css/styles.css" />

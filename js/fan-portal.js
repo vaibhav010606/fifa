@@ -6,10 +6,11 @@ import { sanitizeInput, checkActionCooldown, announceToScreenReader } from './ut
 
 
 
+import { appStore } from './store.js';
+
 export class FanPortalController {
     constructor(app) {
         this.app = app;
-        this.activeTab = 'ai';
         this.chatHistory = [
             {
                 sender: 'ai',
@@ -30,7 +31,14 @@ export class FanPortalController {
 
     init() {
         this.setupTabNavigation();
-        this.renderCurrentTab();
+        
+        // Reactive UI binding for Tabs
+        appStore.subscribe('activeFanTab', (tab) => {
+            this.activeTab = tab;
+            this.updateTabUI(tab);
+            this.renderCurrentTab();
+        });
+
         this.populateSeatFinder();
         // Hook into engine seat map when it finishes generating
         if (this.app.engine) {
@@ -43,30 +51,28 @@ export class FanPortalController {
 
     setupTabNavigation() {
         const tabBtns = document.querySelectorAll('.fan-tab-btn');
-        const tabPanel = document.getElementById('fan-tab-content');
-
         tabBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                tabBtns.forEach(b => {
-                    b.classList.remove('active', 'bg-white/10', 'border', 'border-white/30', 'text-white', 'font-semibold');
-                    b.classList.add('text-white/60', 'hover:text-white', 'hover:bg-white/5');
-                    // ARIA: deselect all tabs
-                    b.setAttribute('aria-selected', 'false');
-                });
-
-                btn.classList.add('active', 'bg-white/10', 'border', 'border-white/30', 'text-white', 'font-semibold');
-                btn.classList.remove('text-white/60', 'hover:text-white', 'hover:bg-white/5');
-                // ARIA: mark the clicked tab as selected
-                btn.setAttribute('aria-selected', 'true');
-
-                // ARIA: update tabpanel's aria-labelledby to match newly active tab
-                if (tabPanel && btn.id) {
-                    tabPanel.setAttribute('aria-labelledby', btn.id);
-                }
-
-                this.activeTab = btn.dataset.tab;
-                this.renderCurrentTab();
+                appStore.setState('activeFanTab', btn.dataset.tab);
             });
+        });
+    }
+
+    updateTabUI(activeTab) {
+        const tabBtns = document.querySelectorAll('.fan-tab-btn');
+        const tabPanel = document.getElementById('fan-tab-content');
+
+        tabBtns.forEach(b => {
+            if (b.dataset.tab === activeTab) {
+                b.classList.add('active', 'bg-white/10', 'border', 'border-white/30', 'text-white', 'font-semibold');
+                b.classList.remove('text-white/60', 'hover:text-white', 'hover:bg-white/5');
+                b.setAttribute('aria-selected', 'true');
+                if (tabPanel && b.id) tabPanel.setAttribute('aria-labelledby', b.id);
+            } else {
+                b.classList.remove('active', 'bg-white/10', 'border', 'border-white/30', 'text-white', 'font-semibold');
+                b.classList.add('text-white/60', 'hover:text-white', 'hover:bg-white/5');
+                b.setAttribute('aria-selected', 'false');
+            }
         });
     }
 

@@ -29,6 +29,7 @@ import {
     STADIUM_METADATA,
 } from '../js/data.js';
 import { sanitizeInput, checkActionCooldown, aiResponseCache } from '../js/utils.js';
+import { Store } from '../js/store.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Test Runner - Migrated to Vitest
@@ -663,6 +664,41 @@ runTest('A11y — subtitle translations are non-empty for all languages', 'Acces
     for (const [lang, text] of Object.entries(translations)) {
         assert.ok(typeof text === 'string' && text.length > 5, `Translation for ${lang} must be non-empty`);
     }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GROUP 22: REACTIVE STATE MANAGEMENT (STORE)
+// ─────────────────────────────────────────────────────────────────────────────
+console.log('\n── Reactive State Management ────────────────────────────────────────────');
+
+runTest('Store — initial state is correctly set', 'Business Logic', () => {
+    const store = new Store({ testKey: 'initial' });
+    assert.equal(store.getState('testKey'), 'initial', 'Store should return initial state');
+});
+
+runTest('Store — setState updates state and triggers subscribers', 'Business Logic', () => {
+    const store = new Store({ count: 0 });
+    let triggeredValue = null;
+    store.subscribe('count', (val) => { triggeredValue = val; });
+    
+    store.setState('count', 1);
+    
+    assert.equal(store.getState('count'), 1, 'Store state should be updated to 1');
+    assert.equal(triggeredValue, 1, 'Subscriber should be called with updated value');
+});
+
+runTest('Store — multiple subscribers on the same key', 'Business Logic', () => {
+    const store = new Store({ active: false });
+    let sub1 = false;
+    let sub2 = false;
+    
+    store.subscribe('active', (val) => { sub1 = val; });
+    store.subscribe('active', (val) => { sub2 = val; });
+    
+    store.setState('active', true);
+    
+    assert.equal(sub1, true, 'Subscriber 1 should be triggered');
+    assert.equal(sub2, true, 'Subscriber 2 should be triggered');
 });
 
 // Vitest will automatically output the test summary and handle exit codes.

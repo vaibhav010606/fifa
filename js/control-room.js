@@ -2,11 +2,11 @@
 
 import { BLOCK_DENSITY_DATA, ALL_FACILITIES, COMMITTEE_RECOMMENDATIONS, VOLUNTEER_TASKS, INCIDENT_LOG, PREDICTIVE_DENSITY_DATA, GENAI_SIGNAGE_PRESETS, SUSTAINABILITY_METRICS } from './data.js';
 
+import { appStore } from './store.js';
+
 export class ControlRoomController {
     constructor(app) {
         this.app = app;
-        this.currentOverlay = 'normal'; // 'density', 'facility', 'normal'
-        this.activeOpsTab = 'incidents'; // 'incidents' or 'logistics'
         this.isCriticalAlertActive = false;
         this.currentTimeTravel = '0m'; // '-30m', '0m', '45m', '90m'
         this.recommendations = [...COMMITTEE_RECOMMENDATIONS];
@@ -16,9 +16,17 @@ export class ControlRoomController {
 
 
     init() {
+        // Reactive bindings for Control Room State
+        appStore.subscribe('currentOverlay', () => {
+            this.renderMapOverlayBar();
+            this.applyDefaultOverlay();
+        });
+        appStore.subscribe('activeOpsTab', () => {
+            this.renderOpsCenterTabbedPanel();
+        });
+
         this.renderAllPanels();
         this.bindGlobalControls();
-        this.applyDefaultOverlay();
     }
 
     applyDefaultOverlay() {
@@ -98,13 +106,13 @@ export class ControlRoomController {
                 <!-- Mode Selector -->
                 <div class="glass-panel px-3 py-1.5 rounded-xl pointer-events-auto flex items-center gap-1.5 border border-white/15 shadow-xl">
                     <span class="text-[10px] text-white/50 uppercase tracking-wider font-semibold mr-1">Mode:</span>
-                    <button class="overlay-toggle-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${this.currentOverlay === 'density' ? 'bg-red-600/90 text-white border border-red-400/50 shadow-lg shadow-red-600/30' : 'bg-white/5 text-white/70 hover:bg-white/10'}" data-mode="density">
+                    <button class="overlay-toggle-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${appStore.getState('currentOverlay') === 'density' ? 'bg-red-600/90 text-white border border-red-400/50 shadow-lg shadow-red-600/30' : 'bg-white/5 text-white/70 hover:bg-white/10'}" data-mode="density">
                         🔥 Density Heatmap
                     </button>
-                    <button class="overlay-toggle-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${this.currentOverlay === 'facility' ? 'bg-blue-600/90 text-white border border-blue-400/50 shadow-lg shadow-blue-600/30' : 'bg-white/5 text-white/70 hover:bg-white/10'}" data-mode="facility">
+                    <button class="overlay-toggle-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${appStore.getState('currentOverlay') === 'facility' ? 'bg-blue-600/90 text-white border border-blue-400/50 shadow-lg shadow-blue-600/30' : 'bg-white/5 text-white/70 hover:bg-white/10'}" data-mode="facility">
                         🛠️ Facility Health
                     </button>
-                    <button class="overlay-toggle-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${this.currentOverlay === 'normal' ? 'bg-white/20 text-white border border-white/40 shadow-md' : 'bg-white/5 text-white/70 hover:bg-white/10'}" data-mode="normal">
+                    <button class="overlay-toggle-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${appStore.getState('currentOverlay') === 'normal' ? 'bg-white/20 text-white border border-white/40 shadow-md' : 'bg-white/5 text-white/70 hover:bg-white/10'}" data-mode="normal">
                         ✨ Standard Bowl
                     </button>
                 </div>
@@ -131,8 +139,7 @@ export class ControlRoomController {
         document.querySelectorAll('.overlay-toggle-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const mode = btn.dataset.mode;
-                this.currentOverlay = mode;
-                this.renderMapOverlayBar();
+                appStore.setState('currentOverlay', mode);
 
                 if (this.app.engine) {
                     if (mode === 'density') {
@@ -341,11 +348,11 @@ export class ControlRoomController {
         const tabStripHtml = `
             <div class="flex items-center justify-between border-b border-white/10 bg-black/40 px-4 py-2 shrink-0">
                 <div class="flex items-center gap-2">
-                    <button class="ops-tab-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${this.activeOpsTab === 'incidents' ? 'bg-red-600/80 text-white border border-red-400/50 shadow-lg shadow-red-600/30' : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'}" data-tab="incidents">
+                    <button class="ops-tab-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${appStore.getState('activeOpsTab') === 'incidents' ? 'bg-red-600/80 text-white border border-red-400/50 shadow-lg shadow-red-600/30' : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'}" data-tab="incidents">
                         <span>🚨 Incidents & Event Stream</span>
                         <span class="px-1.5 py-0.2 rounded bg-white/20 text-white text-[10px] font-mono-num ml-1">${this.incidents.length}</span>
                     </button>
-                    <button class="ops-tab-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${this.activeOpsTab === 'logistics' ? 'bg-purple-600/80 text-white border border-purple-400/50 shadow-lg shadow-purple-600/30' : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'}" data-tab="logistics">
+                    <button class="ops-tab-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${appStore.getState('activeOpsTab') === 'logistics' ? 'bg-purple-600/80 text-white border border-purple-400/50 shadow-lg shadow-purple-600/30' : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'}" data-tab="logistics">
                         <span>📦 Logistics & Volunteer Task Board</span>
                         <span class="px-1.5 py-0.2 rounded bg-white/20 text-white text-[10px] font-mono-num ml-1">${this.tasks.length}</span>
                     </button>
@@ -419,8 +426,7 @@ export class ControlRoomController {
 
         document.querySelectorAll('.ops-tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                this.activeOpsTab = btn.dataset.tab;
-                this.renderOpsCenterTabbedPanel();
+                appStore.setState('activeOpsTab', btn.dataset.tab);
             });
         });
 

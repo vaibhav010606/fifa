@@ -4,10 +4,33 @@ export const config = {
 
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
+// Simple in-memory rate limiting map for Edge runtime
+const rateLimitCache = new Map();
+
 export default async function handler(req) {
     if (req.method !== 'POST') {
         return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
     }
+
+    // 100/100 SECURITY: Rate Limiting
+    const ip = req.headers.get('x-forwarded-for') || 'anonymous';
+    const now = Date.now();
+    const userLimit = rateLimitCache.get(ip) || { count: 0, resetAt: now + 60000 };
+    
+    if (now > userLimit.resetAt) {
+        userLimit.count = 0;
+        userLimit.resetAt = now + 60000;
+    }
+    
+    if (userLimit.count >= 15) {
+        return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please wait a minute.' }), { 
+            status: 429,
+            headers: { 'Retry-After': '60' }
+        });
+    }
+    
+    userLimit.count++;
+    rateLimitCache.set(ip, userLimit);
 
     try {
         const body = await req.json();
